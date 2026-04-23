@@ -35,8 +35,8 @@ const DEFAULT_CONFIG: AppConfig = {
   defaultModels: [
     "anthropic/claude-opus-4-6",
     "openai/gpt-5.4",
-    "google/gemini-2.5-flash",
     "deepseek/deepseek-r1",
+    "google/gemini-3-pro-preview",
   ],
   moderatorModel: "google/gemini-2.5-flash",
   debateStyle: "collaborative",
