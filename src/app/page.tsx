@@ -1,65 +1,617 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
+
+import { Sidebar } from "@/components/Sidebar";
+import { ChatArea } from "@/components/ChatArea";
+import type { Message } from "@/components/ChatArea";
+import { ChatInput } from "@/components/ChatInput";
+import { ControlBar } from "@/components/ControlBar";
+import { ConnectionStatus } from "@/components/ConnectionStatus";
+import { SetupWizard } from "@/components/SetupWizard";
+
+import { DEFAULT_MODELS, getModelInfo } from "@/lib/models";
+import type { ConversationMeta } from "@/lib/conversations";
+import { detectLanguage } from "@/lib/language";
+import type { Language } from "@/lib/language";
+
+type Phase = "idle" | "responding" | "debating" | "summarizing";
+
+let messageCounter = 0;
+function nextId(): string {
+  return `msg-${++messageCounter}-${Date.now()}`;
+}
+
+interface ModelResponse {
+  modelName: string;
+  content: string;
+}
+
+export default function HomePage() {
+  const router = useRouter();
+
+  // Auth state
+  const [hasApiKey, setHasApiKey] = useState<null | boolean>(null);
+
+  // Conversation list
+  const [conversations, setConversations] = useState<ConversationMeta[]>([]);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+
+  // Chat state
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [inputValue, setInputValue] = useState("");
+  const [selectedModelIds, setSelectedModelIds] = useState<string[]>(
+    DEFAULT_MODELS.slice(0, 4).map((m) => m.id)
+  );
+  const [round, setRound] = useState(0);
+  const [phase, setPhase] = useState<Phase>("idle");
+  const [userQuestion, setUserQuestion] = useState("");
+  const [language, setLanguage] = useState<Language>("English");
+  const [estimatedCost, setEstimatedCost] = useState(0);
+  const [conversationCost, setConversationCost] = useState(0);
+
+  // Keep a ref for latest messages to avoid stale closures
+  const messagesRef = useRef<Message[]>([]);
+  messagesRef.current = messages;
+
+  // ─── Initial load ─────────────────────────────────────────────────────────
+
+  useEffect(() => {
+    async function init() {
+      // Check API key
+      try {
+        const res = await fetch("/api/keys?providerId=openrouter");
+        if (res.ok) {
+          const data = await res.json();
+          setHasApiKey(data.hasKey === true);
+        } else {
+          setHasApiKey(false);
+        }
+      } catch {
+        setHasApiKey(false);
+      }
+    }
+    init();
+  }, []);
+
+  useEffect(() => {
+    if (hasApiKey) {
+      loadConversations();
+      loadDefaultModels();
+    }
+  }, [hasApiKey]);
+
+  async function loadConversations() {
+    try {
+      const res = await fetch("/api/conversations");
+      if (res.ok) {
+        const data: ConversationMeta[] = await res.json();
+        setConversations(data);
+      }
+    } catch {
+      // silently fail
+    }
+  }
+
+  async function loadDefaultModels() {
+    try {
+      const res = await fetch("/api/settings");
+      if (res.ok) {
+        const config = await res.json();
+        if (Array.isArray(config.defaultModels) && config.defaultModels.length > 0) {
+          setSelectedModelIds(config.defaultModels.slice(0, 6));
+        }
+      }
+    } catch {
+      // silently fail
+    }
+  }
+
+  // ─── Stream helper ────────────────────────────────────────────────────────
+
+  const streamModelResponse = useCallback(
+    async (
+      modelId: string,
+      modelName: string,
+      color: string,
+      question: string,
+      currentRound: number,
+      previousResponses: ModelResponse[]
+    ): Promise<{ content: string; error?: boolean }> => {
+      // Add a streaming placeholder message
+      const msgId = nextId();
+      const placeholderMsg: Message = {
+        id: msgId,
+        role: "model",
+        modelId,
+        content: "",
+        streaming: true,
+      };
+      setMessages((prev) => [...prev, placeholderMsg]);
+
+      try {
+        const res = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            modelId,
+            modelName,
+            userMessage: question,
+            language,
+            round: currentRound,
+            previousResponses,
+          }),
+        });
+
+        if (!res.body) {
+          throw new Error("No response body");
+        }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let accumulated = "";
+        let errorOccurred = false;
+        let buffer = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() ?? "";
+
+          for (const line of lines) {
+            if (!line.startsWith("data: ")) continue;
+            const data = line.slice(6).trim();
+            if (data === "[DONE]") break;
+
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.error) {
+                errorOccurred = true;
+                accumulated = parsed.error;
+              } else if (typeof parsed.content === "string") {
+                accumulated += parsed.content;
+              }
+            } catch {
+              // skip malformed SSE chunks
+            }
+          }
+
+          // Update the streaming message progressively
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === msgId ? { ...m, content: accumulated } : m
+            )
+          );
+        }
+
+        // Finalize message — remove streaming flag
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === msgId
+              ? { ...m, content: accumulated, streaming: false, error: errorOccurred }
+              : m
+          )
+        );
+
+        return { content: accumulated, error: errorOccurred };
+      } catch (err) {
+        const errMsg = err instanceof Error ? err.message : "An error occurred";
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === msgId
+              ? { ...m, content: errMsg, streaming: false, error: true }
+              : m
+          )
+        );
+        return { content: errMsg, error: true };
+      }
+    },
+    [language]
+  );
+
+  // ─── handleSend ───────────────────────────────────────────────────────────
+
+  async function handleSend() {
+    const question = inputValue.trim();
+    if (!question || phase !== "idle") return;
+
+    setInputValue("");
+    setPhase("responding");
+
+    const detectedLang = detectLanguage(question);
+    setLanguage(detectedLang);
+    setUserQuestion(question);
+    setRound(1);
+
+    // Add user message
+    const userMsgId = nextId();
+    const userMsg: Message = { id: userMsgId, role: "user", content: question };
+    setMessages([userMsg]);
+
+    // Stream responses from all selected models
+    const responses: ModelResponse[] = [];
+    for (const modelId of selectedModelIds) {
+      const info = getModelInfo(modelId);
+      const result = await streamModelResponse(
+        modelId,
+        info.name,
+        info.color,
+        question,
+        1,
+        []
+      );
+      if (!result.error) {
+        responses.push({ modelName: info.name, content: result.content });
+      }
+    }
+
+    // Estimate cost (rough heuristic: ~$0.001 per model per round)
+    const costPerRound = selectedModelIds.length * 0.001;
+    setEstimatedCost(costPerRound);
+    setConversationCost(costPerRound);
+
+    // Save conversation
+    try {
+      const res = await fetch("/api/conversations/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: question.slice(0, 80),
+          models: selectedModelIds.map((id) => getModelInfo(id).name),
+          language: detectedLang,
+          responses,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setActiveConversationId(data.id);
+        await loadConversations();
+      }
+    } catch {
+      // non-fatal
+    }
+
+    setPhase("idle");
+  }
+
+  // ─── handleKeepDebating ───────────────────────────────────────────────────
+
+  async function handleKeepDebating() {
+    if (phase !== "idle") return;
+    setPhase("debating");
+
+    const nextRound = round + 1;
+    setRound(nextRound);
+
+    // Gather the previous round's model responses from state
+    const prevResponses: ModelResponse[] = messagesRef.current
+      .filter((m) => m.role === "model" && !m.error)
+      .slice(-selectedModelIds.length)
+      .map((m) => {
+        const info = getModelInfo(m.modelId ?? "");
+        return { modelName: info.name, content: m.content };
+      });
+
+    // Stream new round responses
+    const responses: ModelResponse[] = [];
+    for (const modelId of selectedModelIds) {
+      const info = getModelInfo(modelId);
+      const result = await streamModelResponse(
+        modelId,
+        info.name,
+        info.color,
+        userQuestion,
+        nextRound,
+        prevResponses
+      );
+      if (!result.error) {
+        responses.push({ modelName: info.name, content: result.content });
+      }
+    }
+
+    // Update cost estimate
+    const costPerRound = selectedModelIds.length * 0.001;
+    setConversationCost((prev) => prev + costPerRound);
+
+    // Append round to file
+    if (activeConversationId) {
+      try {
+        await fetch("/api/conversations/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            conversationId: activeConversationId,
+            round: nextRound,
+            responses,
+          }),
+        });
+      } catch {
+        // non-fatal
+      }
+    }
+
+    setPhase("idle");
+  }
+
+  // ─── handleSummarize ──────────────────────────────────────────────────────
+
+  async function handleSummarize() {
+    if (phase !== "idle") return;
+    setPhase("summarizing");
+
+    // Build full conversation text from messages
+    const fullConversation = messagesRef.current
+      .filter((m) => m.role !== "moderator")
+      .map((m) => {
+        if (m.role === "user") return `User: ${m.content}`;
+        const info = getModelInfo(m.modelId ?? "");
+        return `${info.name}: ${m.content}`;
+      })
+      .join("\n\n");
+
+    // Add streaming summary placeholder
+    const summaryMsgId = nextId();
+    const summaryPlaceholder: Message = {
+      id: summaryMsgId,
+      role: "moderator",
+      content: "",
+      streaming: true,
+    };
+    setMessages((prev) => [...prev, summaryPlaceholder]);
+
+    let summaryContent = "";
+    let summaryError = false;
+
+    try {
+      const res = await fetch("/api/summarize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          originalQuestion: userQuestion,
+          fullConversation,
+          language,
+        }),
+      });
+
+      if (!res.body) throw new Error("No response body");
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          const data = line.slice(6).trim();
+          if (data === "[DONE]") break;
+
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed.error) {
+              summaryError = true;
+              summaryContent = parsed.error;
+            } else if (typeof parsed.content === "string") {
+              summaryContent += parsed.content;
+            }
+          } catch {
+            // skip
+          }
+        }
+
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === summaryMsgId ? { ...m, content: summaryContent } : m
+          )
+        );
+      }
+
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === summaryMsgId
+            ? { ...m, content: summaryContent, streaming: false, error: summaryError }
+            : m
+        )
+      );
+    } catch (err) {
+      summaryContent = err instanceof Error ? err.message : "Summarization failed";
+      summaryError = true;
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === summaryMsgId
+            ? { ...m, content: summaryContent, streaming: false, error: true }
+            : m
+        )
+      );
+    }
+
+    // Append summary to file
+    if (activeConversationId && !summaryError) {
+      try {
+        const settings = await fetch("/api/settings").then((r) => r.json());
+        const moderatorName = getModelInfo(settings.moderatorModel ?? "").name;
+        await fetch("/api/conversations/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            conversationId: activeConversationId,
+            summary: summaryContent,
+            moderatorName,
+          }),
+        });
+      } catch {
+        // non-fatal
+      }
+    }
+
+    setPhase("idle");
+  }
+
+  // ─── handleNewConversation ────────────────────────────────────────────────
+
+  function handleNewConversation() {
+    setMessages([]);
+    setActiveConversationId(null);
+    setRound(0);
+    setPhase("idle");
+    setUserQuestion("");
+    setLanguage("English");
+    setInputValue("");
+    setEstimatedCost(0);
+    setConversationCost(0);
+  }
+
+  // ─── handleSelectConversation ─────────────────────────────────────────────
+
+  async function handleSelectConversation(id: string) {
+    setActiveConversationId(id);
+    // Load and display the conversation — for now just show the raw content
+    // as a moderator message (read-only view)
+    try {
+      const res = await fetch(`/api/conversations?id=${id}`);
+      if (res.ok) {
+        const data = await res.json();
+        // Show as a simple moderator message (read-only conversation view)
+        setMessages([
+          {
+            id: nextId(),
+            role: "moderator",
+            content: data.content ?? "",
+          },
+        ]);
+        setRound(0);
+        setPhase("idle");
+      }
+    } catch {
+      // silently fail
+    }
+  }
+
+  // ─── handleDeleteConversation ─────────────────────────────────────────────
+
+  async function handleDeleteConversation(id: string) {
+    try {
+      await fetch("/api/conversations", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (activeConversationId === id) {
+        handleNewConversation();
+      }
+      await loadConversations();
+    } catch {
+      // silently fail
+    }
+  }
+
+  // ─── Render ───────────────────────────────────────────────────────────────
+
+  // Loading state
+  if (hasApiKey === null) {
+    return (
+      <div className="flex flex-1 items-center justify-center min-h-screen bg-gray-50">
+        <svg
+          className="animate-spin w-8 h-8 text-blue-600"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle
+            className="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+          />
+          <path
+            className="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+          />
+        </svg>
+      </div>
+    );
+  }
+
+  // Setup wizard
+  if (hasApiKey === false) {
+    return (
+      <SetupWizard
+        onComplete={() => {
+          setHasApiKey(true);
+        }}
+      />
+    );
+  }
+
+  const isResponding = phase !== "idle";
+  const inputDisabled = isResponding || round > 0;
+  const showControlBar = round > 0 && phase === "idle";
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="flex h-screen overflow-hidden bg-gray-50">
+      {/* Sidebar */}
+      <Sidebar
+        conversations={conversations}
+        activeId={activeConversationId ?? undefined}
+        onSelect={handleSelectConversation}
+        onNew={handleNewConversation}
+        onDelete={handleDeleteConversation}
+        onOpenSettings={() => router.push("/settings")}
+      />
+
+      {/* Main content */}
+      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+        {/* Top bar */}
+        <div className="flex items-center justify-end px-4 py-2 border-b border-gray-200 bg-white shrink-0">
+          <ConnectionStatus />
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        {/* Chat area */}
+        <ChatArea messages={messages} topic={userQuestion || undefined} />
+
+        {/* Control bar */}
+        {showControlBar && (
+          <ControlBar
+            round={round}
+            estimatedCost={estimatedCost}
+            conversationCost={conversationCost}
+            allModels={DEFAULT_MODELS}
+            selectedModelIds={selectedModelIds}
+            onKeepDebating={handleKeepDebating}
+            onSummarize={handleSummarize}
+            onModelsChange={setSelectedModelIds}
+            isResponding={isResponding}
+          />
+        )}
+
+        {/* Chat input */}
+        <div className="px-4 py-3 border-t border-gray-200 bg-white shrink-0">
+          <ChatInput
+            value={inputValue}
+            onChange={setInputValue}
+            onSend={handleSend}
+            disabled={inputDisabled}
+            placeholder={
+              round > 0
+                ? "Use the controls above to keep debating or summarize"
+                : "Ask a question or enter a topic for models to debate…"
+            }
+          />
         </div>
-      </main>
+      </div>
     </div>
   );
 }
