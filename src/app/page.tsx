@@ -481,26 +481,122 @@ export default function HomePage() {
 
   async function handleSelectConversation(id: string) {
     setActiveConversationId(id);
-    // Load and display the conversation — for now just show the raw content
-    // as a moderator message (read-only view)
     try {
       const res = await fetch(`/api/conversations?id=${id}`);
       if (res.ok) {
         const data = await res.json();
-        // Show as a simple moderator message (read-only conversation view)
-        setMessages([
-          {
+        const content: string = data.content ?? "";
+
+        // Parse the markdown into individual messages
+        const parsed: Message[] = [];
+        const lines = content.split("\n");
+        let currentModel = "";
+        let currentContent = "";
+        let inSummary = false;
+        let summaryContent = "";
+
+        for (const line of lines) {
+          // Title line (user's question)
+          const titleMatch = line.match(/^# (.+)$/);
+          if (titleMatch) {
+            parsed.push({
+              id: nextId(),
+              role: "user",
+              content: titleMatch[1],
+            });
+            continue;
+          }
+
+          // Summary section
+          if (line.match(/^## Summary/)) {
+            // Flush any current model content
+            if (currentModel && currentContent.trim()) {
+              parsed.push({
+                id: nextId(),
+                role: "model",
+                modelId: resolveModelIdFromName(currentModel),
+                content: currentContent.trim(),
+              });
+              currentModel = "";
+              currentContent = "";
+            }
+            inSummary = true;
+            continue;
+          }
+
+          if (inSummary) {
+            summaryContent += line + "\n";
+            continue;
+          }
+
+          // Model heading (### ModelName)
+          const modelMatch = line.match(/^### (.+)$/);
+          if (modelMatch) {
+            // Flush previous model
+            if (currentModel && currentContent.trim()) {
+              parsed.push({
+                id: nextId(),
+                role: "model",
+                modelId: resolveModelIdFromName(currentModel),
+                content: currentContent.trim(),
+              });
+            }
+            currentModel = modelMatch[1];
+            currentContent = "";
+            continue;
+          }
+
+          // Skip round headers and metadata lines
+          if (line.match(/^## Round/) || line.match(/^\*.*\*/)) {
+            continue;
+          }
+
+          // Accumulate content for current model
+          if (currentModel) {
+            currentContent += line + "\n";
+          }
+        }
+
+        // Flush last model
+        if (currentModel && currentContent.trim()) {
+          parsed.push({
+            id: nextId(),
+            role: "model",
+            modelId: resolveModelIdFromName(currentModel),
+            content: currentContent.trim(),
+          });
+        }
+
+        // Add summary if present
+        if (summaryContent.trim()) {
+          parsed.push({
             id: nextId(),
             role: "moderator",
-            content: data.content ?? "",
-          },
-        ]);
+            content: summaryContent.trim(),
+          });
+        }
+
+        setMessages(parsed.length > 0 ? parsed : [{
+          id: nextId(),
+          role: "user",
+          content: "(Empty conversation)",
+        }]);
         setRound(0);
         setPhase("idle");
+        setUserQuestion("");
       }
     } catch {
       // silently fail
     }
+  }
+
+  // Helper to find a model ID from display name
+  function resolveModelIdFromName(name: string): string {
+    const allModels = getAllModels(customModels);
+    const found = allModels.find(
+      (m) => m.name === name || m.name.toLowerCase() === name.toLowerCase()
+    );
+    return found?.id || name;
   }
 
   // ─── handleDeleteConversation ─────────────────────────────────────────────
@@ -612,7 +708,7 @@ export default function HomePage() {
         onSelect={handleSelectConversation}
         onNew={handleNewConversation}
         onDelete={handleDeleteConversation}
-        onOpenSettings={() => router.push("/settings")}
+        onOpenSettings={() => window.open("/settings", "_blank")}
       />
 
       {/* Main content */}
