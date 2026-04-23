@@ -1,5 +1,5 @@
 import { getApiKey } from "@/app/api/keys/route";
-import type { ProviderConfig } from "@/lib/config";
+import type { ProviderConfig, CustomModel } from "@/lib/config";
 import { createAnthropicProvider } from "./anthropic-direct";
 import { createGoogleProvider } from "./google-direct";
 import { createOpenAICompatibleProvider } from "./openai-compatible";
@@ -62,8 +62,22 @@ export async function getProvider(providerConfig: ProviderConfig): Promise<Provi
  */
 export async function getProviderForModel(
   modelId: string,
-  providers: ProviderConfig[]
+  providers: ProviderConfig[],
+  customModels?: CustomModel[]
 ): Promise<Provider | null> {
+  // Check if this model has a specific provider assigned (custom models)
+  if (customModels) {
+    const customModel = customModels.find((m) => m.id === modelId);
+    if (customModel) {
+      const assignedProvider = providers.find((p) => p.id === customModel.providerId);
+      if (assignedProvider) {
+        const provider = await getProvider(assignedProvider);
+        if (provider) return provider;
+      }
+    }
+  }
+
+  // For built-in models, try the default provider first
   const defaultProvider = providers.find((p) => p.isDefault);
 
   if (defaultProvider) {

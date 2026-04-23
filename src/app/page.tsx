@@ -11,7 +11,9 @@ import { ControlBar } from "@/components/ControlBar";
 import { ConnectionStatus } from "@/components/ConnectionStatus";
 import { SetupWizard } from "@/components/SetupWizard";
 
-import { DEFAULT_MODELS, getModelInfo } from "@/lib/models";
+import { DEFAULT_MODELS, getModelInfo, getAllModels } from "@/lib/models";
+import type { ModelInfo } from "@/lib/models";
+import type { CustomModel } from "@/lib/config";
 import type { ConversationMeta } from "@/lib/conversations";
 import { detectLanguage } from "@/lib/language";
 import type { Language } from "@/lib/language";
@@ -41,6 +43,7 @@ export default function HomePage() {
   // Chat state
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
+  const [customModels, setCustomModels] = useState<CustomModel[]>([]);
   const [selectedModelIds, setSelectedModelIds] = useState<string[]>(
     DEFAULT_MODELS.slice(0, 4).map((m) => m.id)
   );
@@ -101,6 +104,9 @@ export default function HomePage() {
         const config = await res.json();
         if (Array.isArray(config.defaultModels) && config.defaultModels.length > 0) {
           setSelectedModelIds(config.defaultModels.slice(0, 6));
+        }
+        if (Array.isArray(config.customModels)) {
+          setCustomModels(config.customModels);
         }
       }
     } catch {
@@ -235,7 +241,7 @@ export default function HomePage() {
     // Stream responses from all selected models
     const responses: ModelResponse[] = [];
     for (const modelId of selectedModelIds) {
-      const info = getModelInfo(modelId);
+      const info = getModelInfo(modelId, customModels);
       const result = await streamModelResponse(
         modelId,
         info.name,
@@ -292,14 +298,14 @@ export default function HomePage() {
       .filter((m) => m.role === "model" && !m.error)
       .slice(-selectedModelIds.length)
       .map((m) => {
-        const info = getModelInfo(m.modelId ?? "");
+        const info = getModelInfo(m.modelId ?? "", customModels);
         return { modelName: info.name, content: m.content };
       });
 
     // Stream new round responses
     const responses: ModelResponse[] = [];
     for (const modelId of selectedModelIds) {
-      const info = getModelInfo(modelId);
+      const info = getModelInfo(modelId, customModels);
       const result = await streamModelResponse(
         modelId,
         info.name,
@@ -348,7 +354,7 @@ export default function HomePage() {
       .filter((m) => m.role !== "moderator")
       .map((m) => {
         if (m.role === "user") return `User: ${m.content}`;
-        const info = getModelInfo(m.modelId ?? "");
+        const info = getModelInfo(m.modelId ?? "", customModels);
         return `${info.name}: ${m.content}`;
       })
       .join("\n\n");
@@ -439,7 +445,7 @@ export default function HomePage() {
     if (activeConversationId && !summaryError) {
       try {
         const settings = await fetch("/api/settings").then((r) => r.json());
-        const moderatorName = getModelInfo(settings.moderatorModel ?? "").name;
+        const moderatorName = getModelInfo(settings.moderatorModel ?? "", customModels).name;
         await fetch("/api/conversations/create", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -521,7 +527,7 @@ export default function HomePage() {
     if (phase !== "idle") return;
     setPhase("responding");
 
-    const info = getModelInfo(modelId);
+    const info = getModelInfo(modelId, customModels);
 
     // Figure out which round this failed message was in
     const failedMsg = messagesRef.current.find((m) => m.id === messageId);
@@ -532,7 +538,7 @@ export default function HomePage() {
       .filter((m) => m.role === "model" && !m.error && m.id !== messageId)
       .slice(-selectedModelIds.length)
       .map((m) => {
-        const mInfo = getModelInfo(m.modelId ?? "");
+        const mInfo = getModelInfo(m.modelId ?? "", customModels);
         return { modelName: mInfo.name, content: m.content };
       });
 
@@ -617,7 +623,7 @@ export default function HomePage() {
         </div>
 
         {/* Chat area */}
-        <ChatArea messages={messages} topic={userQuestion || undefined} onRetry={handleRetry} />
+        <ChatArea messages={messages} topic={userQuestion || undefined} onRetry={handleRetry} customModels={customModels} />
 
         {/* Control bar */}
         {showControlBar && (
@@ -625,7 +631,7 @@ export default function HomePage() {
             round={round}
             estimatedCost={estimatedCost}
             conversationCost={conversationCost}
-            allModels={DEFAULT_MODELS}
+            allModels={getAllModels(customModels)}
             selectedModelIds={selectedModelIds}
             onKeepDebating={handleKeepDebating}
             onSummarize={handleSummarize}

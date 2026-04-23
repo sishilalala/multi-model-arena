@@ -4,6 +4,13 @@ import path from "path";
 const CONFIG_DIR = path.join(process.env.HOME || "~", ".multi-model-arena");
 const CONFIG_PATH = path.join(CONFIG_DIR, "config.json");
 
+export interface CustomModel {
+  id: string;
+  name: string;
+  color: string;
+  providerId: string;
+}
+
 export interface AppConfig {
   defaultModels: string[];
   moderatorModel: string;
@@ -13,6 +20,7 @@ export interface AppConfig {
   conversationsFolder: string;
   memoryEnabled: boolean;
   providers: ProviderConfig[];
+  customModels: CustomModel[];
 }
 
 export interface ProviderConfig {
@@ -25,12 +33,12 @@ export interface ProviderConfig {
 
 const DEFAULT_CONFIG: AppConfig = {
   defaultModels: [
-    "anthropic/claude-sonnet",
-    "openai/gpt-4o",
-    "google/gemini-2.5-flash-preview",
+    "anthropic/claude-opus-4-6",
+    "openai/gpt-5.4",
+    "google/gemini-2.5-flash",
     "deepseek/deepseek-r1",
   ],
-  moderatorModel: "google/gemini-2.5-flash-preview",
+  moderatorModel: "google/gemini-2.5-flash",
   debateStyle: "collaborative",
   temperature: 0.7,
   monthlySpendingLimit: 20,
@@ -45,6 +53,7 @@ const DEFAULT_CONFIG: AppConfig = {
       isDefault: true,
     },
   ],
+  customModels: [],
 };
 
 export function readConfig(): AppConfig {

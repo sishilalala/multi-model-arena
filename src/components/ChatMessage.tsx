@@ -12,6 +12,7 @@ interface ChatMessageProps {
   error?: boolean;
   streaming?: boolean;
   onRetry?: () => void;
+  customModels?: import("@/lib/config").CustomModel[];
 }
 
 export function ChatMessage({
@@ -22,6 +23,7 @@ export function ChatMessage({
   error = false,
   streaming = false,
   onRetry,
+  customModels,
 }: ChatMessageProps) {
   const isUser = role === "user";
 
@@ -36,7 +38,7 @@ export function ChatMessage({
   }
 
   // Model message
-  const model = modelId ? getModelInfo(modelId) : null;
+  const model = modelId ? getModelInfo(modelId, customModels) : null;
 
   if (error) {
     return (

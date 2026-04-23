@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
 
   const config = readConfig();
 
-  const provider = await getProviderForModel(config.moderatorModel, config.providers);
+  const provider = await getProviderForModel(config.moderatorModel, config.providers, config.customModels);
   if (!provider) {
     return errorStream(
       `No provider available for moderator model "${config.moderatorModel}". Please configure an API key in settings.`

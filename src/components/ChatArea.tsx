@@ -18,9 +18,10 @@ interface ChatAreaProps {
   messages: Message[];
   topic?: string;
   onRetry?: (messageId: string, modelId: string) => void;
+  customModels?: import("@/lib/config").CustomModel[];
 }
 
-export function ChatArea({ messages, topic, onRetry }: ChatAreaProps) {
+export function ChatArea({ messages, topic, onRetry, customModels }: ChatAreaProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -68,6 +69,7 @@ export function ChatArea({ messages, topic, onRetry }: ChatAreaProps) {
                 error={msg.error}
                 streaming={msg.streaming}
                 onRetry={msg.error && msg.modelId && onRetry ? () => onRetry(msg.id, msg.modelId!) : undefined}
+                customModels={customModels}
               />
             );
           })}

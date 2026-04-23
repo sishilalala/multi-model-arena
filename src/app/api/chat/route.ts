@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     return errorStream("Monthly spending limit reached. Please increase your budget in settings.");
   }
 
-  const provider = await getProviderForModel(modelId, config.providers);
+  const provider = await getProviderForModel(modelId, config.providers, config.customModels);
   if (!provider) {
     return errorStream(
       `No provider available for model "${modelId}". Please configure an API key in settings.`

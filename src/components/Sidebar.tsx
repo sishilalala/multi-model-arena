@@ -82,11 +82,14 @@ export function Sidebar({
                 const isHovered = hoveredId === conv.id;
                 return (
                   <li key={conv.id}>
-                    <button
+                    <div
+                      role="button"
+                      tabIndex={0}
                       onClick={() => onSelect(conv.id)}
+                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onSelect(conv.id); }}
                       onMouseEnter={() => setHoveredId(conv.id)}
                       onMouseLeave={() => setHoveredId(null)}
-                      className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-left transition-colors group ${
+                      className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-left transition-colors group cursor-pointer ${
                         isActive
                           ? "bg-[#FAE8D4] border border-[#E8C4A8]"
                           : "border border-transparent hover:bg-[#EDE8E3]"
@@ -121,7 +124,7 @@ export function Sidebar({
                           <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
                         </svg>
                       </button>
-                    </button>
+                    </div>
                   </li>
                 );
               })}
