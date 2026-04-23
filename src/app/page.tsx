@@ -52,6 +52,7 @@ export default function HomePage() {
   const [userQuestion, setUserQuestion] = useState("");
   const [language, setLanguage] = useState<Language>("English");
   const [hasSummary, setHasSummary] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Keep a ref for latest messages to avoid stale closures
   const messagesRef = useRef<Message[]>([]);
@@ -832,8 +833,6 @@ export default function HomePage() {
   const isResponding = phase !== "idle";
   const inputDisabled = isResponding || hasSummary;
   const showControlBar = round > 0 && phase === "idle" && !hasSummary;
-
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#FAF9F6]">
