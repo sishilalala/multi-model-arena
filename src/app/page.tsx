@@ -51,8 +51,6 @@ export default function HomePage() {
   const [phase, setPhase] = useState<Phase>("idle");
   const [userQuestion, setUserQuestion] = useState("");
   const [language, setLanguage] = useState<Language>("English");
-  const [estimatedCost, setEstimatedCost] = useState(0);
-  const [conversationCost, setConversationCost] = useState(0);
   const [hasSummary, setHasSummary] = useState(false);
 
   // Keep a ref for latest messages to avoid stale closures
@@ -73,13 +71,12 @@ export default function HomePage() {
           language,
           selectedModelIds,
           hasSummary,
-          conversationCost,
         }));
       } catch {
         // ignore storage errors
       }
     }
-  }, [messages, round, activeConversationId, userQuestion, language, selectedModelIds, hasSummary, conversationCost]);
+  }, [messages, round, activeConversationId, userQuestion, language, selectedModelIds, hasSummary]);
 
   // Restore session on mount
   const restoredRef = useRef(false);
@@ -98,7 +95,6 @@ export default function HomePage() {
         setLanguage(session.language || "English");
         setSelectedModelIds(session.selectedModelIds || []);
         setHasSummary(session.hasSummary || false);
-        setConversationCost(session.conversationCost || 0);
       }
     } catch {
       // ignore parse errors
@@ -285,27 +281,30 @@ export default function HomePage() {
     const userMsg: Message = { id: userMsgId, role: "user", content: question };
     setMessages([userMsg]);
 
-    // Stream responses from all selected models
-    const responses: ModelResponse[] = [];
-    for (const modelId of selectedModelIds) {
+    // Stream responses from all selected models in parallel
+    const promises = selectedModelIds.map((modelId) => {
       const info = getModelInfo(modelId, customModels);
-      const result = await streamModelResponse(
+      return streamModelResponse(
         modelId,
         info.name,
         info.color,
         question,
         1,
         []
-      );
-      if (!result.error) {
-        responses.push({ modelName: info.name, content: result.content });
+      ).then((result) => ({
+        modelName: info.name,
+        content: result.content,
+        error: result.error,
+      }));
+    });
+
+    const results = await Promise.allSettled(promises);
+    const responses: ModelResponse[] = [];
+    for (const result of results) {
+      if (result.status === "fulfilled" && !result.value.error) {
+        responses.push({ modelName: result.value.modelName, content: result.value.content });
       }
     }
-
-    // Estimate cost (rough heuristic: ~$0.001 per model per round)
-    const costPerRound = selectedModelIds.length * 0.001;
-    setEstimatedCost(costPerRound);
-    setConversationCost(costPerRound);
 
     // Save conversation
     try {
@@ -364,26 +363,30 @@ export default function HomePage() {
       }
     }
 
-    // Stream new round responses
-    const responses: ModelResponse[] = [];
-    for (const modelId of selectedModelIds) {
+    // Stream new round responses in parallel
+    const debatePromises = selectedModelIds.map((modelId) => {
       const info = getModelInfo(modelId, customModels);
-      const result = await streamModelResponse(
+      return streamModelResponse(
         modelId,
         info.name,
         info.color,
         userQuestion,
         nextRound,
         prevResponses
-      );
-      if (!result.error) {
-        responses.push({ modelName: info.name, content: result.content });
+      ).then((result) => ({
+        modelName: info.name,
+        content: result.content,
+        error: result.error,
+      }));
+    });
+
+    const debateResults = await Promise.allSettled(debatePromises);
+    const responses: ModelResponse[] = [];
+    for (const result of debateResults) {
+      if (result.status === "fulfilled" && !result.value.error) {
+        responses.push({ modelName: result.value.modelName, content: result.value.content });
       }
     }
-
-    // Update cost estimate
-    const costPerRound = selectedModelIds.length * 0.001;
-    setConversationCost((prev) => prev + costPerRound);
 
     // Append round to file
     if (activeConversationId) {
@@ -537,8 +540,6 @@ export default function HomePage() {
     setLanguage("English");
     setInputValue("");
     setHasSummary(false);
-    setEstimatedCost(0);
-    setConversationCost(0);
     try { localStorage.removeItem("arena-session"); } catch {}
   }
 
@@ -811,8 +812,6 @@ export default function HomePage() {
         {showControlBar && (
           <ControlBar
             round={round}
-            estimatedCost={estimatedCost}
-            conversationCost={conversationCost}
             allModels={getAllModels(customModels)}
             selectedModelIds={selectedModelIds}
             onKeepDebating={handleKeepDebating}

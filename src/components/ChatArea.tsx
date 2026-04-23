@@ -9,7 +9,6 @@ export interface Message {
   role: "user" | "model" | "moderator";
   modelId?: string;
   content: string;
-  cost?: number;
   error?: boolean;
   streaming?: boolean;
 }
@@ -65,7 +64,6 @@ export function ChatArea({ messages, topic, onRetry, customModels }: ChatAreaPro
                 role={msg.role}
                 modelId={msg.modelId}
                 content={msg.content}
-                cost={msg.cost}
                 error={msg.error}
                 streaming={msg.streaming}
                 onRetry={msg.error && msg.modelId && onRetry ? () => onRetry(msg.id, msg.modelId!) : undefined}

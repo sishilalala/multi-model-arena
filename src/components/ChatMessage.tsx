@@ -8,8 +8,6 @@ interface ChatMessageProps {
   role: "user" | "model";
   modelId?: string;
   content: string;
-  /** Cost in USD */
-  cost?: number;
   error?: boolean;
   streaming?: boolean;
   onRetry?: () => void;
@@ -20,7 +18,6 @@ export function ChatMessage({
   role,
   modelId,
   content,
-  cost,
   error = false,
   streaming = false,
   onRetry,
@@ -84,11 +81,6 @@ export function ChatMessage({
             <span className="text-xs font-medium" style={{ color: model.color }}>
               {model.name}
             </span>
-            {cost != null && cost > 0 && (
-              <span className="text-xs text-[#B0A49A] ml-1">
-                ${cost.toFixed(4)}
-              </span>
-            )}
           </div>
         )}
         <div className="rounded-2xl rounded-tl-sm border border-[#E8E0D8] bg-white px-4 py-2.5 text-sm text-[#2C2420] leading-relaxed shadow-sm">

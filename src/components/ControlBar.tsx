@@ -8,8 +8,6 @@ const MAX_ROUNDS = 10;
 
 interface ControlBarProps {
   round: number;
-  estimatedCost: number;
-  conversationCost: number;
   allModels: ModelInfo[];
   selectedModelIds: string[];
   onKeepDebating: () => void;
@@ -20,8 +18,6 @@ interface ControlBarProps {
 
 export function ControlBar({
   round,
-  estimatedCost,
-  conversationCost,
   allModels,
   selectedModelIds,
   onKeepDebating,
@@ -30,7 +26,6 @@ export function ControlBar({
   isResponding = false,
 }: ControlBarProps) {
   const atMaxRounds = round >= MAX_ROUNDS;
-  const highCost = conversationCost >= 1;
 
   return (
     <div className="border-t border-b border-[#E8E0D8] bg-[#F5F0EB] px-4 py-3 flex flex-col gap-3">
@@ -60,18 +55,8 @@ export function ControlBar({
           <span className="font-medium text-[#5C4F46]">
             Round {round} of {MAX_ROUNDS}
           </span>
-          <span className="text-[#B0A49A] text-xs">
-            ~${estimatedCost.toFixed(4)} / round
-          </span>
         </div>
       </div>
-
-      {/* Cost warning */}
-      {highCost && (
-        <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5">
-          Conversation cost: ${conversationCost.toFixed(4)} — this conversation has exceeded $1.
-        </div>
-      )}
 
       {/* Model selector */}
       <ModelSelector
