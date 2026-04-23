@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Markdown from "react-markdown";
 import { getModelInfo } from "@/lib/models";
 
 interface ChatMessageProps {
@@ -31,7 +32,9 @@ export function ChatMessage({
     return (
       <div className="flex justify-end px-4 py-1">
         <div className="max-w-[70%] rounded-2xl rounded-tr-sm bg-[#C96A2E] text-white px-4 py-2.5 text-sm leading-relaxed shadow-sm">
-          {content}
+          <div className="prose prose-sm prose-invert max-w-none [&>p]:m-0 [&>p+p]:mt-2 [&>ul]:my-1 [&>ol]:my-1">
+            <Markdown>{content}</Markdown>
+          </div>
         </div>
       </div>
     );
@@ -88,8 +91,10 @@ export function ChatMessage({
             )}
           </div>
         )}
-        <div className="rounded-2xl rounded-tl-sm border border-[#E8E0D8] bg-white px-4 py-2.5 text-sm text-[#2C2420] whitespace-pre-wrap leading-relaxed shadow-sm">
-          {content}
+        <div className="rounded-2xl rounded-tl-sm border border-[#E8E0D8] bg-white px-4 py-2.5 text-sm text-[#2C2420] leading-relaxed shadow-sm">
+          <div className="prose prose-sm max-w-none [&>p]:m-0 [&>p+p]:mt-2 [&>ul]:my-1 [&>ol]:my-1 [&>h1]:text-base [&>h2]:text-sm [&>h3]:text-sm [&_strong]:text-[#2C2420] [&_li]:my-0.5">
+            <Markdown>{content}</Markdown>
+          </div>
           {streaming && (
             <span className="inline-block w-0.5 h-4 bg-[#C96A2E] ml-0.5 align-middle animate-pulse" />
           )}

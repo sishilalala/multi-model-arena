@@ -10,7 +10,7 @@ export interface ModelInfo {
 export const DEFAULT_MODELS: ModelInfo[] = [
   { id: "anthropic/claude-opus-4-6", name: "Claude Opus 4.6", color: "#d97706", providerId: "openrouter" },
   { id: "openai/gpt-5.4", name: "GPT-5.4", color: "#10b981", providerId: "openrouter" },
-  { id: "google/gemini-3-pro-preview", name: "Gemini 3 Pro", color: "#4285f4", providerId: "openrouter" },
+  { id: "google/gemini-3.1-pro-preview", name: "Gemini 3.1 Pro", color: "#4285f4", providerId: "openrouter" },
   { id: "google/gemini-2.5-flash", name: "Gemini 2.5 Flash", color: "#3b82f6", providerId: "openrouter" },
   { id: "xiaomi/mimo-v2-pro", name: "MiMo-V2-Pro", color: "#f97316", providerId: "openrouter" },
   { id: "qwen/qwen3.6-plus", name: "Qwen 3.6 Plus", color: "#7c3aed", providerId: "openrouter" },

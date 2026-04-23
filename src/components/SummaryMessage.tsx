@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Markdown from "react-markdown";
 
 interface SummaryMessageProps {
   content: string;
@@ -35,7 +36,9 @@ export function SummaryMessage({ content }: SummaryMessageProps) {
           {copied ? "Copied!" : "Copy"}
         </button>
       </div>
-      <p className="text-sm text-[#5C3D00] whitespace-pre-wrap leading-relaxed">{content}</p>
+      <div className="prose prose-sm max-w-none text-[#5C3D00] [&>p]:m-0 [&>p+p]:mt-2 [&>ul]:my-1 [&>ol]:my-1 [&>h1]:text-base [&>h2]:text-sm [&>h2]:mt-3 [&>h2]:mb-1 [&>h3]:text-sm [&_strong]:text-[#5C3D00] [&_li]:my-0.5">
+        <Markdown>{content}</Markdown>
+      </div>
     </div>
   );
 }
