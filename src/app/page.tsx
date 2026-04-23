@@ -53,6 +53,7 @@ export default function HomePage() {
   const [language, setLanguage] = useState<Language>("English");
   const [estimatedCost, setEstimatedCost] = useState(0);
   const [conversationCost, setConversationCost] = useState(0);
+  const [hasSummary, setHasSummary] = useState(false);
 
   // Keep a ref for latest messages to avoid stale closures
   const messagesRef = useRef<Message[]>([]);
@@ -460,6 +461,7 @@ export default function HomePage() {
       }
     }
 
+    setHasSummary(true);
     setPhase("idle");
   }
 
@@ -473,6 +475,7 @@ export default function HomePage() {
     setUserQuestion("");
     setLanguage("English");
     setInputValue("");
+    setHasSummary(false);
     setEstimatedCost(0);
     setConversationCost(0);
   }
@@ -697,7 +700,7 @@ export default function HomePage() {
 
   const isResponding = phase !== "idle";
   const inputDisabled = isResponding || round > 0;
-  const showControlBar = round > 0 && phase === "idle";
+  const showControlBar = round > 0 && phase === "idle" && !hasSummary;
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#FAF9F6]">
