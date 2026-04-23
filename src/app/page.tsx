@@ -160,6 +160,8 @@ export default function HomePage() {
 
   // ─── Stream helper ────────────────────────────────────────────────────────
 
+  const MODEL_TIMEOUT_MS = 90_000; // 90 seconds max per model
+
   const streamModelResponse = useCallback(
     async (
       modelId: string,
@@ -180,6 +182,10 @@ export default function HomePage() {
       };
       setMessages((prev) => [...prev, placeholderMsg]);
 
+      // Create an abort controller for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), MODEL_TIMEOUT_MS);
+
       try {
         const res = await fetch("/api/chat", {
           method: "POST",
@@ -192,6 +198,7 @@ export default function HomePage() {
             round: currentRound,
             previousResponses,
           }),
+          signal: controller.signal,
         });
 
         if (!res.body) {
@@ -247,9 +254,14 @@ export default function HomePage() {
           )
         );
 
+        clearTimeout(timeoutId);
         return { content: accumulated, error: errorOccurred };
       } catch (err) {
-        const errMsg = err instanceof Error ? err.message : "An error occurred";
+        clearTimeout(timeoutId);
+        const isTimeout = err instanceof DOMException && err.name === "AbortError";
+        const errMsg = isTimeout
+          ? "Timed out (90s)"
+          : err instanceof Error ? err.message : "An error occurred";
         setMessages((prev) =>
           prev.map((m) =>
             m.id === msgId
