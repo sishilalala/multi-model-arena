@@ -14,7 +14,6 @@ export const DEFAULT_MODELS: ModelInfo[] = [
   { id: "google/gemini-2.5-flash", name: "Gemini 2.5 Flash", color: "#3b82f6", providerId: "openrouter" },
   { id: "xiaomi/mimo-v2-pro", name: "MiMo-V2-Pro", color: "#f97316", providerId: "openrouter" },
   { id: "qwen/qwen3.6-plus", name: "Qwen 3.6 Plus", color: "#7c3aed", providerId: "openrouter" },
-  { id: "bytedance-seed/seed-2.0-pro", name: "Seed 2.0 Pro", color: "#8b5cf6", providerId: "openrouter" },
 ];
 
 // Random warm colors for custom models

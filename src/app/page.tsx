@@ -59,6 +59,52 @@ export default function HomePage() {
   const messagesRef = useRef<Message[]>([]);
   messagesRef.current = messages;
 
+  // ─── Persist active session to localStorage ──────────────────────────────
+
+  // Save session state whenever key values change
+  useEffect(() => {
+    if (round > 0 && activeConversationId && messages.length > 0) {
+      try {
+        localStorage.setItem("arena-session", JSON.stringify({
+          activeConversationId,
+          messages,
+          round,
+          userQuestion,
+          language,
+          selectedModelIds,
+          hasSummary,
+          conversationCost,
+        }));
+      } catch {
+        // ignore storage errors
+      }
+    }
+  }, [messages, round, activeConversationId, userQuestion, language, selectedModelIds, hasSummary, conversationCost]);
+
+  // Restore session on mount
+  const restoredRef = useRef(false);
+  useEffect(() => {
+    if (restoredRef.current) return;
+    restoredRef.current = true;
+    try {
+      const saved = localStorage.getItem("arena-session");
+      if (!saved) return;
+      const session = JSON.parse(saved);
+      if (session.activeConversationId && session.messages?.length > 0) {
+        setActiveConversationId(session.activeConversationId);
+        setMessages(session.messages);
+        setRound(session.round || 0);
+        setUserQuestion(session.userQuestion || "");
+        setLanguage(session.language || "English");
+        setSelectedModelIds(session.selectedModelIds || []);
+        setHasSummary(session.hasSummary || false);
+        setConversationCost(session.conversationCost || 0);
+      }
+    } catch {
+      // ignore parse errors
+    }
+  }, []);
+
   // ─── Initial load ─────────────────────────────────────────────────────────
 
   useEffect(() => {
@@ -478,6 +524,7 @@ export default function HomePage() {
     setHasSummary(false);
     setEstimatedCost(0);
     setConversationCost(0);
+    try { localStorage.removeItem("arena-session"); } catch {}
   }
 
   // ─── handleSelectConversation ─────────────────────────────────────────────
