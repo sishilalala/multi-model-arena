@@ -523,6 +523,17 @@ export default function HomePage() {
       } catch {
         // non-fatal
       }
+
+      // Update conversation memory
+      try {
+        await fetch("/api/memory", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title: userQuestion, summary: summaryContent }),
+        });
+      } catch {
+        // non-fatal
+      }
     }
 
     setHasSummary(true);
