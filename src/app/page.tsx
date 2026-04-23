@@ -340,14 +340,29 @@ export default function HomePage() {
     const nextRound = round + 1;
     setRound(nextRound);
 
-    // Gather the previous round's model responses from state
-    const prevResponses: ModelResponse[] = messagesRef.current
+    // Gather the previous round's model responses + any user follow-ups
+    const recentMessages = messagesRef.current;
+    const prevResponses: ModelResponse[] = [];
+
+    // Get model responses from the latest round
+    const modelMsgs = recentMessages
       .filter((m) => m.role === "model" && !m.error)
-      .slice(-selectedModelIds.length)
-      .map((m) => {
-        const info = getModelInfo(m.modelId ?? "", customModels);
-        return { modelName: info.name, content: m.content };
-      });
+      .slice(-selectedModelIds.length);
+    for (const m of modelMsgs) {
+      const info = getModelInfo(m.modelId ?? "", customModels);
+      prevResponses.push({ modelName: info.name, content: m.content });
+    }
+
+    // Include any user follow-up messages added after the last model response
+    const lastModelIdx = recentMessages.findLastIndex((m) => m.role === "model");
+    if (lastModelIdx >= 0) {
+      const followUps = recentMessages
+        .slice(lastModelIdx + 1)
+        .filter((m) => m.role === "user");
+      for (const m of followUps) {
+        prevResponses.push({ modelName: "User", content: m.content });
+      }
+    }
 
     // Stream new round responses
     const responses: ModelResponse[] = [];
@@ -704,6 +719,27 @@ export default function HomePage() {
     setPhase("idle");
   }
 
+  // ─── handleUserFollowUp ──────────────────────────────────────────────────
+
+  function handleUserFollowUp() {
+    const text = inputValue.trim();
+    if (!text || phase !== "idle" || round === 0) return;
+
+    setInputValue("");
+
+    // Add the user's follow-up as a message in the chat
+    const userMsg: Message = {
+      id: nextId(),
+      role: "user",
+      content: text,
+    };
+    setMessages((prev) => [...prev, userMsg]);
+
+    // Update the user question to include this follow-up so the next debate
+    // round sees it as part of the conversation context
+    setUserQuestion((prev) => prev + "\n\n[User follow-up]: " + text);
+  }
+
   // ─── Render ───────────────────────────────────────────────────────────────
 
   // Loading state
@@ -746,7 +782,7 @@ export default function HomePage() {
   }
 
   const isResponding = phase !== "idle";
-  const inputDisabled = isResponding || round > 0;
+  const inputDisabled = isResponding || hasSummary;
   const showControlBar = round > 0 && phase === "idle" && !hasSummary;
 
   return (
@@ -791,12 +827,14 @@ export default function HomePage() {
           <ChatInput
             value={inputValue}
             onChange={setInputValue}
-            onSend={handleSend}
+            onSend={round > 0 ? handleUserFollowUp : handleSend}
             disabled={inputDisabled}
             placeholder={
-              round > 0
-                ? "Use the controls above to keep debating or summarize"
-                : "Ask a question or enter a topic for models to debate…"
+              hasSummary
+                ? "Start a new conversation to continue"
+                : round > 0
+                  ? "Add your thoughts before the next round (optional)..."
+                  : "Ask a question or enter a topic for models to debate…"
             }
           />
         </div>
