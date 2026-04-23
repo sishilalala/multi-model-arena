@@ -115,11 +115,20 @@ export function createConversation(title: string, models: string[], language: La
 
   const date = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
   const slug = slugify(title, { lower: true, strict: true });
-  const id = `${date}-${slug}`;
+  const filename = `${date}-${slug}`;
   const header = buildHeader(title, date, models, language, 0);
 
-  fs.writeFileSync(filePath(folder, id), header, "utf-8");
-  return id;
+  let filepath = path.join(folder, `${filename}.md`);
+  let counter = 1;
+  while (fs.existsSync(filepath)) {
+    filepath = path.join(folder, `${filename}-${counter}.md`);
+    counter++;
+  }
+  // Update id to match actual filename
+  const actualFilename = path.basename(filepath, ".md");
+
+  fs.writeFileSync(filepath, header, "utf-8");
+  return actualFilename;
 }
 
 /** Append text to a conversation file. */

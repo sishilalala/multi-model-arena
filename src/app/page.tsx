@@ -833,22 +833,36 @@ export default function HomePage() {
   const inputDisabled = isResponding || hasSummary;
   const showControlBar = round > 0 && phase === "idle" && !hasSummary;
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   return (
     <div className="flex h-screen overflow-hidden bg-[#FAF9F6]">
       {/* Sidebar */}
       <Sidebar
         conversations={conversations}
         activeId={activeConversationId ?? undefined}
-        onSelect={handleSelectConversation}
-        onNew={handleNewConversation}
+        onSelect={(id) => { handleSelectConversation(id); setSidebarOpen(false); }}
+        onNew={() => { handleNewConversation(); setSidebarOpen(false); }}
         onDelete={handleDeleteConversation}
         onOpenSettings={() => window.open("/settings", "_blank")}
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
       />
 
       {/* Main content */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         {/* Top bar */}
-        <div className="flex items-center justify-end px-4 py-2 border-b border-[#E8E0D8] bg-[#FAF9F6] shrink-0">
+        <div className="flex items-center justify-between px-4 py-2 border-b border-[#E8E0D8] bg-[#FAF9F6] shrink-0">
+          {/* Hamburger button — only visible on small screens */}
+          <button
+            className="md:hidden p-1.5 rounded-lg text-[#8B7E74] hover:bg-[#E8E0D8] transition-colors"
+            aria-label="Toggle sidebar"
+            onClick={() => setSidebarOpen((prev) => !prev)}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+              <path fillRule="evenodd" d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 5A.75.75 0 012.75 9h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 9.75zm0 5a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75a.75.75 0 01-.75-.75z" clipRule="evenodd" />
+            </svg>
+          </button>
           <ConnectionStatus />
         </div>
 

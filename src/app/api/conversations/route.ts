@@ -4,6 +4,7 @@ import {
   readConversation,
   deleteConversation,
   clearAllConversations,
+  moveConversationsFolder,
 } from "@/lib/conversations";
 
 /** GET /api/conversations        → list all
@@ -23,6 +24,30 @@ export async function GET(request: NextRequest) {
 
   const conversations = listConversations();
   return Response.json(conversations);
+}
+
+/** PUT /api/conversations
+ *  Body: { oldFolder: "...", newFolder: "..." } → move all conversation files
+ */
+export async function PUT(request: NextRequest) {
+  let body: Record<string, unknown>;
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  const { oldFolder, newFolder } = body as { oldFolder?: string; newFolder?: string };
+  if (!oldFolder || !newFolder) {
+    return Response.json({ error: "oldFolder and newFolder are required" }, { status: 400 });
+  }
+
+  try {
+    moveConversationsFolder(oldFolder, newFolder);
+    return Response.json({ success: true });
+  } catch (err) {
+    return Response.json({ error: String(err) }, { status: 500 });
+  }
 }
 
 /** DELETE /api/conversations

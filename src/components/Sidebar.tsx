@@ -12,6 +12,8 @@ interface SidebarProps {
   onNew: () => void;
   onDelete: (id: string) => void;
   onOpenSettings: () => void;
+  open?: boolean;
+  onClose?: () => void;
 }
 
 function formatDate(dateStr: string): string {
@@ -35,6 +37,8 @@ export function Sidebar({
   onNew,
   onDelete,
   onOpenSettings,
+  open = true,
+  onClose,
 }: SidebarProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
@@ -61,7 +65,22 @@ export function Sidebar({
 
   return (
     <>
-      <aside className="w-72 flex flex-col h-full border-r border-[#E8E0D8] bg-[#F2EDE8]">
+      {/* Mobile backdrop */}
+      {open && (
+        <div
+          className="fixed inset-0 z-30 bg-black/40 md:hidden"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      )}
+      <aside
+        className={`
+          w-72 flex flex-col border-r border-[#E8E0D8] bg-[#F2EDE8]
+          fixed inset-y-0 left-0 z-40 transition-transform duration-200 ease-in-out
+          md:relative md:translate-x-0 md:flex md:h-full
+          ${open ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+        `}
+      >
         {/* Header */}
         <div className="p-3 border-b border-[#E8E0D8]">
           <Button variant="primary" size="sm" onClick={onNew} className="w-full rounded-lg">

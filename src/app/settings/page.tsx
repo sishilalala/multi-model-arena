@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import type { AppConfig, CustomModel } from "@/lib/config";
 import { DEFAULT_MODELS, getAllModels, pickCustomColor } from "@/lib/models";
@@ -58,6 +58,7 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savedMsg, setSavedMsg] = useState(false);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Danger zone state
   const [showClearDialog, setShowClearDialog] = useState(false);
@@ -126,7 +127,74 @@ export default function SettingsPage() {
     [config]
   );
 
+  const debouncedSave = useCallback(
+    (patch: Partial<AppConfig>) => {
+      // Update local state immediately for responsiveness
+      if (config) setConfig({ ...config, ...patch });
+
+      // Debounce the actual API call
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = setTimeout(() => {
+        save(patch);
+      }, 500);
+    },
+    [config, save]
+  );
+
+  // ─── Provider status ──────────────────────────────────────────────────────
+
+  const [providerStatus, setProviderStatus] = useState<Record<string, "connected" | "no-key">>({});
+
+  useEffect(() => {
+    if (!config) return;
+    async function checkProviders() {
+      const statuses: Record<string, "connected" | "no-key"> = {};
+      await Promise.all(
+        (config?.providers ?? []).map(async (provider) => {
+          try {
+            const res = await fetch(`/api/keys?providerId=${provider.id}`);
+            if (res.ok) {
+              const data = await res.json();
+              statuses[provider.id] = data.hasKey === true ? "connected" : "no-key";
+            } else {
+              statuses[provider.id] = "no-key";
+            }
+          } catch {
+            statuses[provider.id] = "no-key";
+          }
+        })
+      );
+      setProviderStatus(statuses);
+    }
+    checkProviders();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [config?.providers?.length]);
+
   // ─── Handlers ─────────────────────────────────────────────────────────────
+
+  async function handleConversationsFolderChange(newFolder: string) {
+    if (!config) return;
+    const oldFolder = config.conversationsFolder;
+    // Update local state immediately
+    setConfig({ ...config, conversationsFolder: newFolder });
+
+    // Debounce: move files then save config
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(async () => {
+      if (oldFolder && newFolder && oldFolder !== newFolder) {
+        try {
+          await fetch("/api/conversations", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ oldFolder, newFolder }),
+          });
+        } catch {
+          // non-fatal: log silently
+        }
+      }
+      save({ conversationsFolder: newFolder });
+    }, 500);
+  }
 
   function toggleDefaultModel(id: string) {
     if (!config) return;
@@ -365,8 +433,21 @@ export default function SettingsPage() {
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                    {providerStatus[provider.id] === "no-key" ? (
+                      <span className="w-2 h-2 rounded-full bg-amber-400" title="No key stored" />
+                    ) : (
+                      <span className="w-2 h-2 rounded-full bg-emerald-500" title="Connected" />
+                    )}
                     <p className="text-sm font-medium text-[#1a1a1a]">{provider.name}</p>
+                    {providerStatus[provider.id] === "no-key" ? (
+                      <span className="text-[10px] font-medium text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
+                        No key
+                      </span>
+                    ) : providerStatus[provider.id] === "connected" ? (
+                      <span className="text-[10px] font-medium text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
+                        Connected
+                      </span>
+                    ) : null}
                     {provider.isDefault && (
                       <span className="text-[10px] font-medium text-[#C96A2E] bg-[#FEF3E8] px-1.5 py-0.5 rounded">
                         DEFAULT
@@ -781,7 +862,7 @@ export default function SettingsPage() {
             max={2}
             step={0.1}
             value={config.temperature}
-            onChange={(e) => save({ temperature: parseFloat(e.target.value) })}
+            onChange={(e) => debouncedSave({ temperature: parseFloat(e.target.value) })}
             className="w-full accent-[#C96A2E] bg-[#E8E0D8] rounded-lg h-2"
           />
         </SectionCard>
@@ -799,7 +880,7 @@ export default function SettingsPage() {
               step={1}
               value={config.monthlySpendingLimit}
               onChange={(e) =>
-                save({ monthlySpendingLimit: Math.max(0, parseFloat(e.target.value) || 0) })
+                debouncedSave({ monthlySpendingLimit: Math.max(0, parseFloat(e.target.value) || 0) })
               }
               className="w-28 border border-[#E8E0D8] rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#C96A2E] text-[#1a1a1a]"
             />
@@ -832,7 +913,7 @@ export default function SettingsPage() {
           <input
             type="text"
             value={config.conversationsFolder}
-            onChange={(e) => save({ conversationsFolder: e.target.value })}
+            onChange={(e) => handleConversationsFolderChange(e.target.value)}
             placeholder="/path/to/folder"
             className="border border-[#E8E0D8] rounded-lg px-3 py-2 text-sm font-mono bg-white focus:outline-none focus:ring-2 focus:ring-[#C96A2E] text-[#1a1a1a] placeholder-[#B0A49A]"
           />
