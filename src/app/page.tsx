@@ -571,16 +571,35 @@ export default function HomePage() {
         let currentContent = "";
         let inSummary = false;
         let summaryContent = "";
+        let parsedTitle = "";
+        let parsedRound = 0;
+        let parsedModelNames: string[] = [];
+        let hasSummarySection = false;
 
         for (const line of lines) {
           // Title line (user's question)
           const titleMatch = line.match(/^# (.+)$/);
           if (titleMatch) {
+            parsedTitle = titleMatch[1];
             parsed.push({
               id: nextId(),
               role: "user",
-              content: titleMatch[1],
+              content: parsedTitle,
             });
+            continue;
+          }
+
+          // Metadata: *Debate rounds: N*
+          const roundMatch = line.match(/^\*Debate rounds:\s*(\d+)\*$/);
+          if (roundMatch) {
+            parsedRound = parseInt(roundMatch[1], 10);
+            continue;
+          }
+
+          // Metadata: *Models: ...*
+          const modelsMatch = line.match(/^\*Models:\s*(.+)\*$/);
+          if (modelsMatch) {
+            parsedModelNames = modelsMatch[1].split(",").map((s) => s.trim());
             continue;
           }
 
@@ -598,6 +617,7 @@ export default function HomePage() {
               currentContent = "";
             }
             inSummary = true;
+            hasSummarySection = true;
             continue;
           }
 
@@ -623,8 +643,8 @@ export default function HomePage() {
             continue;
           }
 
-          // Skip round headers and metadata lines
-          if (line.match(/^## Round/) || line.match(/^\*.*\*/)) {
+          // Skip round headers and other metadata lines
+          if (line.match(/^## Round/) || line.match(/^\*.*\*$/)) {
             continue;
           }
 
@@ -658,9 +678,25 @@ export default function HomePage() {
           role: "user",
           content: "(Empty conversation)",
         }]);
-        setRound(0);
+
+        // Restore conversation state so debate controls appear
+        setRound(parsedRound > 0 ? parsedRound : 1);
         setPhase("idle");
-        setUserQuestion("");
+        setUserQuestion(parsedTitle);
+        setHasSummary(hasSummarySection);
+        if (parsedTitle) {
+          setLanguage(detectLanguage(parsedTitle));
+        }
+
+        // Restore selected models from metadata if available
+        if (parsedModelNames.length > 0) {
+          const resolvedIds = parsedModelNames
+            .map((name) => resolveModelIdFromName(name))
+            .filter((id) => id.length > 0);
+          if (resolvedIds.length > 0) {
+            setSelectedModelIds(resolvedIds);
+          }
+        }
       }
     } catch {
       // silently fail
