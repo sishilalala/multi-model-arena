@@ -61,10 +61,10 @@ export function Sidebar({
 
   return (
     <>
-      <aside className="w-72 flex flex-col h-full border-r border-gray-200 bg-white">
+      <aside className="w-72 flex flex-col h-full border-r border-[#E8E0D8] bg-[#F2EDE8]">
         {/* Header */}
-        <div className="p-3 border-b border-gray-200">
-          <Button variant="primary" size="sm" onClick={onNew} className="w-full">
+        <div className="p-3 border-b border-[#E8E0D8]">
+          <Button variant="primary" size="sm" onClick={onNew} className="w-full rounded-lg">
             + New Conversation
           </Button>
         </div>
@@ -72,7 +72,7 @@ export function Sidebar({
         {/* Conversation list */}
         <nav className="flex-1 overflow-y-auto py-2">
           {conversations.length === 0 ? (
-            <p className="text-xs text-gray-400 text-center mt-6 px-4">
+            <p className="text-xs text-[#B0A49A] text-center mt-6 px-4">
               No conversations yet
             </p>
           ) : (
@@ -88,19 +88,19 @@ export function Sidebar({
                       onMouseLeave={() => setHoveredId(null)}
                       className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-left transition-colors group ${
                         isActive
-                          ? "border border-blue-400 bg-blue-50"
-                          : "border border-transparent hover:bg-gray-100"
+                          ? "bg-[#FAE8D4] border border-[#E8C4A8]"
+                          : "border border-transparent hover:bg-[#EDE8E3]"
                       }`}
                     >
                       <div className="flex-1 min-w-0">
                         <p
                           className={`text-sm font-medium truncate ${
-                            isActive ? "text-blue-800" : "text-gray-800"
+                            isActive ? "text-[#7A3B1E]" : "text-[#2C2420]"
                           }`}
                         >
                           {conv.title}
                         </p>
-                        <p className="text-xs text-gray-400 mt-0.5">
+                        <p className="text-xs text-[#B0A49A] mt-0.5">
                           {formatDate(conv.date)}
                         </p>
                       </div>
@@ -108,7 +108,7 @@ export function Sidebar({
                       <button
                         onClick={(e) => handleDeleteClick(e, conv.id)}
                         aria-label={`Delete "${conv.title}"`}
-                        className={`flex-shrink-0 w-5 h-5 flex items-center justify-center rounded text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all ${
+                        className={`flex-shrink-0 w-5 h-5 flex items-center justify-center rounded text-[#B0A49A] hover:text-red-500 hover:bg-red-50 transition-all ${
                           isHovered || isActive ? "opacity-100" : "opacity-0"
                         }`}
                       >
@@ -130,16 +130,16 @@ export function Sidebar({
         </nav>
 
         {/* Footer */}
-        <div className="p-3 border-t border-gray-200">
+        <div className="p-3 border-t border-[#E8E0D8]">
           <button
             onClick={onOpenSettings}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-100 transition-colors"
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-[#8B7E74] hover:bg-[#EDE8E3] hover:text-[#5C4F46] transition-colors"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 20 20"
               fill="currentColor"
-              className="w-4 h-4 flex-shrink-0 text-gray-400"
+              className="w-4 h-4 flex-shrink-0 text-[#B0A49A]"
             >
               <path
                 fillRule="evenodd"

@@ -39,8 +39,8 @@ export function ModelSelector({
             title={atMax ? `Max ${maxModels} models selected` : undefined}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors border ${
               selected
-                ? "bg-gray-800 text-white border-gray-800"
-                : "bg-white text-gray-700 border-gray-300 hover:border-gray-400 hover:bg-gray-50"
+                ? "bg-[#3D2B1F] text-white border-[#3D2B1F]"
+                : "bg-white text-[#5C4F46] border-[#E8E0D8] hover:border-[#C9A88A] hover:bg-[#FAF0E8]"
             } disabled:opacity-40 disabled:cursor-not-allowed`}
           >
             <span

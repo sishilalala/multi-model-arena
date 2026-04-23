@@ -56,7 +56,7 @@ export function ChatInput({
   const canSend = !disabled && value.trim().length > 0;
 
   return (
-    <div className="flex items-end gap-2 rounded-xl border border-gray-300 bg-white px-3 py-2 shadow-sm focus-within:border-blue-400 focus-within:ring-1 focus-within:ring-blue-400">
+    <div className="flex items-end gap-2 rounded-2xl border border-[#E8E0D8] bg-white px-4 py-2.5 shadow-sm focus-within:border-[#C96A2E] focus-within:ring-1 focus-within:ring-[#C96A2E] transition-all">
       <textarea
         ref={textareaRef}
         value={value}
@@ -65,14 +65,14 @@ export function ChatInput({
         disabled={disabled}
         placeholder={placeholder}
         rows={1}
-        className="flex-1 resize-none bg-transparent text-sm text-gray-800 placeholder-gray-400 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 max-h-[200px] leading-relaxed py-0.5"
+        className="flex-1 resize-none bg-transparent text-sm text-[#1a1a1a] placeholder-[#B0A49A] focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 max-h-[200px] leading-relaxed py-0.5"
         style={{ height: "auto", minHeight: "24px" }}
       />
       <button
         onClick={handleSendClick}
         disabled={!canSend}
         aria-label="Send message"
-        className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
+        className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-xl bg-[#C96A2E] text-white hover:bg-[#B55D26] active:bg-[#A05020] disabled:bg-[#EDE8E3] disabled:text-[#B0A49A] disabled:cursor-not-allowed transition-colors"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"

@@ -27,7 +27,7 @@ export function Slider({
 }: SliderProps) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-sm font-medium text-gray-700">
+      <label className="text-sm font-medium text-[#5C4F46]">
         {label}
       </label>
       <input
@@ -38,10 +38,10 @@ export function Slider({
         value={value}
         disabled={disabled}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full h-2 rounded-lg appearance-none cursor-pointer bg-gray-200 accent-blue-600 disabled:cursor-not-allowed disabled:opacity-50"
+        className="w-full h-2 rounded-lg appearance-none cursor-pointer bg-[#E8E0D8] accent-[#C96A2E] disabled:cursor-not-allowed disabled:opacity-50"
       />
       {(leftLabel || rightLabel) && (
-        <div className="flex justify-between text-xs text-gray-500">
+        <div className="flex justify-between text-xs text-[#8B7E74]">
           <span>{leftLabel ?? ""}</span>
           <span>{rightLabel ?? ""}</span>
         </div>

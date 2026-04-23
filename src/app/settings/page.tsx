@@ -24,8 +24,8 @@ function Toggle({
       aria-checked={checked}
       aria-label={label}
       onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-        checked ? "bg-blue-600" : "bg-gray-200"
+      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#C96A2E] focus:ring-offset-2 ${
+        checked ? "bg-[#C96A2E]" : "bg-[#E8E0D8]"
       }`}
     >
       <span
@@ -45,8 +45,8 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 flex flex-col gap-4">
-      <h2 className="text-base font-semibold text-gray-900">{title}</h2>
+    <div className="bg-white rounded-xl border border-[#E8E0D8] shadow-sm p-6 flex flex-col gap-4">
+      <h2 className="text-base font-semibold text-[#1a1a1a]">{title}</h2>
       {children}
     </div>
   );
@@ -174,9 +174,9 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-1 items-center justify-center min-h-screen bg-gray-50">
+      <div className="flex flex-1 items-center justify-center min-h-screen bg-[#FAF9F6]">
         <svg
-          className="animate-spin w-8 h-8 text-blue-600"
+          className="animate-spin w-8 h-8 text-[#C96A2E]"
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
           viewBox="0 0 24 24"
@@ -190,36 +190,36 @@ export default function SettingsPage() {
 
   if (!config) {
     return (
-      <div className="flex flex-1 items-center justify-center min-h-screen bg-gray-50">
+      <div className="flex flex-1 items-center justify-center min-h-screen bg-[#FAF9F6]">
         <p className="text-red-600">Failed to load settings.</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#FAF9F6]">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
+      <header className="bg-[#FAF9F6] border-b border-[#E8E0D8] sticky top-0 z-10">
         <div className="max-w-2xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
               onClick={() => router.push("/")}
-              className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors"
+              className="flex items-center gap-1.5 text-sm text-[#8B7E74] hover:text-[#1a1a1a] transition-colors"
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
                 <path fillRule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clipRule="evenodd" />
               </svg>
               Back to Chat
             </button>
-            <span className="text-gray-300">|</span>
-            <h1 className="text-base font-semibold text-gray-900">Settings</h1>
+            <span className="text-[#E8E0D8]">|</span>
+            <h1 className="text-base font-semibold text-[#1a1a1a]">Settings</h1>
           </div>
           <div className="flex items-center gap-2">
             {saving && (
-              <span className="text-xs text-gray-400">Saving…</span>
+              <span className="text-xs text-[#B0A49A]">Saving…</span>
             )}
             {savedMsg && (
-              <span className="text-xs text-green-600 font-medium">Saved</span>
+              <span className="text-xs text-emerald-600 font-medium">Saved</span>
             )}
           </div>
         </div>
@@ -232,11 +232,11 @@ export default function SettingsPage() {
             <div key={provider.id} className="flex flex-col gap-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{provider.name}</p>
-                  <p className="text-xs text-gray-400">{provider.baseUrl}</p>
+                  <p className="text-sm font-medium text-[#1a1a1a]">{provider.name}</p>
+                  <p className="text-xs text-[#B0A49A]">{provider.baseUrl}</p>
                 </div>
-                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-green-700 bg-green-50 border border-green-200 px-2 py-1 rounded-full">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-full">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                   Active
                 </span>
               </div>
@@ -246,14 +246,14 @@ export default function SettingsPage() {
                   value={providerKey}
                   onChange={(e) => setProviderKey(e.target.value)}
                   placeholder="sk-or-… (leave blank to keep current)"
-                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 border border-[#E8E0D8] rounded-lg px-3 py-2 text-sm font-mono bg-white focus:outline-none focus:ring-2 focus:ring-[#C96A2E] focus:border-transparent text-[#1a1a1a] placeholder-[#B0A49A]"
                 />
                 <Button variant="secondary" size="sm" onClick={handleSaveApiKey} disabled={!providerKey.trim()}>
                   Update Key
                 </Button>
               </div>
               {keyMsg && (
-                <p className="text-xs text-green-700">{keyMsg}</p>
+                <p className="text-xs text-emerald-700">{keyMsg}</p>
               )}
             </div>
           ))}
@@ -261,7 +261,7 @@ export default function SettingsPage() {
 
         {/* Default Models */}
         <SectionCard title="Default Models">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-[#8B7E74]">
             Select up to {MAX_MODELS} models to use by default in new conversations.
           </p>
           <div className="flex flex-col gap-2">
@@ -273,8 +273,8 @@ export default function SettingsPage() {
                   key={model.id}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border cursor-pointer transition-colors ${
                     selected
-                      ? "border-blue-400 bg-blue-50"
-                      : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                      ? "border-[#E8C4A8] bg-[#FEF3E8]"
+                      : "border-[#E8E0D8] hover:border-[#C9A88A] hover:bg-[#FAF0E8]"
                   } ${atMax ? "opacity-40 cursor-not-allowed" : ""}`}
                 >
                   <input
@@ -288,10 +288,10 @@ export default function SettingsPage() {
                     className="w-3 h-3 rounded-full flex-shrink-0"
                     style={{ backgroundColor: model.color }}
                   />
-                  <span className="text-sm text-gray-800 flex-1">{model.name}</span>
-                  <span className="text-xs text-gray-400 font-mono">{model.id}</span>
+                  <span className="text-sm text-[#2C2420] flex-1">{model.name}</span>
+                  <span className="text-xs text-[#B0A49A] font-mono">{model.id}</span>
                   {selected && (
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-blue-600 flex-shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-[#C96A2E] flex-shrink-0">
                       <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
                     </svg>
                   )}
@@ -303,13 +303,13 @@ export default function SettingsPage() {
 
         {/* Moderator Model */}
         <SectionCard title="Moderator Model">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-[#8B7E74]">
             The model used to generate debate summaries.
           </p>
           <select
             value={config.moderatorModel}
             onChange={(e) => save({ moderatorModel: e.target.value })}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="border border-[#E8E0D8] rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#C96A2E] text-[#1a1a1a]"
           >
             {DEFAULT_MODELS.map((m) => (
               <option key={m.id} value={m.id}>
@@ -321,7 +321,7 @@ export default function SettingsPage() {
 
         {/* Debate Style */}
         <SectionCard title="Debate Style">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-[#8B7E74]">
             Controls how models respond to each other.
           </p>
           <div className="flex gap-2">
@@ -332,15 +332,15 @@ export default function SettingsPage() {
                 onClick={() => save({ debateStyle: style })}
                 className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium border transition-colors capitalize ${
                   config.debateStyle === style
-                    ? "bg-gray-900 text-white border-gray-900"
-                    : "bg-white text-gray-700 border-gray-300 hover:border-gray-400"
+                    ? "bg-[#3D2B1F] text-white border-[#3D2B1F]"
+                    : "bg-white text-[#5C4F46] border-[#E8E0D8] hover:border-[#C9A88A] hover:bg-[#FAF0E8]"
                 }`}
               >
                 {style}
               </button>
             ))}
           </div>
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-[#B0A49A]">
             {config.debateStyle === "collaborative"
               ? "Models build on each other's ideas and seek common ground."
               : "Models challenge and critique each other's positions."}
@@ -349,9 +349,9 @@ export default function SettingsPage() {
 
         {/* Temperature */}
         <SectionCard title="Temperature">
-          <div className="flex items-center justify-between text-xs text-gray-500">
+          <div className="flex items-center justify-between text-xs text-[#8B7E74]">
             <span>Focused</span>
-            <span className="font-medium text-gray-800">{config.temperature.toFixed(1)}</span>
+            <span className="font-medium text-[#1a1a1a]">{config.temperature.toFixed(1)}</span>
             <span>Creative</span>
           </div>
           <input
@@ -361,17 +361,17 @@ export default function SettingsPage() {
             step={0.1}
             value={config.temperature}
             onChange={(e) => save({ temperature: parseFloat(e.target.value) })}
-            className="w-full accent-blue-600"
+            className="w-full accent-[#C96A2E] bg-[#E8E0D8] rounded-lg h-2"
           />
         </SectionCard>
 
         {/* Monthly Spending Limit */}
         <SectionCard title="Monthly Spending Limit">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-[#8B7E74]">
             Conversations will be blocked once this limit is reached.
           </p>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-700">$</span>
+            <span className="text-sm text-[#5C4F46]">$</span>
             <input
               type="number"
               min={0}
@@ -380,9 +380,9 @@ export default function SettingsPage() {
               onChange={(e) =>
                 save({ monthlySpendingLimit: Math.max(0, parseFloat(e.target.value) || 0) })
               }
-              className="w-28 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-28 border border-[#E8E0D8] rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#C96A2E] text-[#1a1a1a]"
             />
-            <span className="text-sm text-gray-400">/ month</span>
+            <span className="text-sm text-[#B0A49A]">/ month</span>
           </div>
         </SectionCard>
 
@@ -390,8 +390,8 @@ export default function SettingsPage() {
         <SectionCard title="Conversation Memory">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-900">Enable Memory</p>
-              <p className="text-xs text-gray-500 mt-0.5">
+              <p className="text-sm font-medium text-[#1a1a1a]">Enable Memory</p>
+              <p className="text-xs text-[#8B7E74] mt-0.5">
                 Models can reference context from previous conversations via a shared memory file.
               </p>
             </div>
@@ -405,7 +405,7 @@ export default function SettingsPage() {
 
         {/* Conversations Folder */}
         <SectionCard title="Conversations Folder">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-[#8B7E74]">
             Where conversation markdown files are stored on disk.
           </p>
           <input
@@ -413,7 +413,7 @@ export default function SettingsPage() {
             value={config.conversationsFolder}
             onChange={(e) => save({ conversationsFolder: e.target.value })}
             placeholder="/path/to/folder"
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="border border-[#E8E0D8] rounded-lg px-3 py-2 text-sm font-mono bg-white focus:outline-none focus:ring-2 focus:ring-[#C96A2E] text-[#1a1a1a] placeholder-[#B0A49A]"
           />
         </SectionCard>
 
@@ -422,7 +422,7 @@ export default function SettingsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-red-700">Clear All History</p>
-              <p className="text-xs text-gray-500 mt-0.5">
+              <p className="text-xs text-[#8B7E74] mt-0.5">
                 Permanently delete all conversation files. This cannot be undone.
               </p>
             </div>
@@ -443,10 +443,10 @@ export default function SettingsPage() {
 
       {/* Clear all dialog */}
       {showClearDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-950/60 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 flex flex-col gap-4">
-            <h2 className="text-lg font-semibold text-gray-900">Clear All History</h2>
-            <p className="text-sm text-gray-600">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#1a1a1a]/60 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-[#FAF9F6] rounded-2xl shadow-2xl border border-[#E8E0D8] p-6 flex flex-col gap-4">
+            <h2 className="text-lg font-semibold text-[#1a1a1a]">Clear All History</h2>
+            <p className="text-sm text-[#5C4F46]">
               This will permanently delete all conversation files. Type{" "}
               <span className="font-mono font-bold text-red-600">DELETE ALL</span> to confirm.
             </p>
@@ -458,7 +458,7 @@ export default function SettingsPage() {
                 setClearError(null);
               }}
               placeholder="DELETE ALL"
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-red-500"
+              className="border border-[#E8E0D8] rounded-lg px-3 py-2 text-sm font-mono bg-white focus:outline-none focus:ring-2 focus:ring-red-500 text-[#1a1a1a] placeholder-[#B0A49A]"
             />
             {clearError && (
               <p className="text-sm text-red-600">{clearError}</p>

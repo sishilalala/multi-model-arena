@@ -33,7 +33,7 @@ export function ControlBar({
   const highCost = conversationCost >= 1;
 
   return (
-    <div className="border-t border-b border-gray-200 bg-gray-50 px-4 py-3 flex flex-col gap-3">
+    <div className="border-t border-b border-[#E8E0D8] bg-[#F5F0EB] px-4 py-3 flex flex-col gap-3">
       {/* Top row: actions + round info */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
@@ -56,11 +56,11 @@ export function ControlBar({
           </Button>
         </div>
 
-        <div className="flex items-center gap-3 text-sm text-gray-600">
-          <span className="font-medium">
+        <div className="flex items-center gap-3 text-sm text-[#8B7E74]">
+          <span className="font-medium text-[#5C4F46]">
             Round {round} of {MAX_ROUNDS}
           </span>
-          <span className="text-gray-400 text-xs">
+          <span className="text-[#B0A49A] text-xs">
             ~${estimatedCost.toFixed(4)} / round
           </span>
         </div>
@@ -68,7 +68,7 @@ export function ControlBar({
 
       {/* Cost warning */}
       {highCost && (
-        <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-1.5">
+        <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5">
           Conversation cost: ${conversationCost.toFixed(4)} — this conversation has exceeded $1.
         </div>
       )}

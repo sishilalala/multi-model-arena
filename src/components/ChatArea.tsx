@@ -17,9 +17,10 @@ export interface Message {
 interface ChatAreaProps {
   messages: Message[];
   topic?: string;
+  onRetry?: (messageId: string, modelId: string) => void;
 }
 
-export function ChatArea({ messages, topic }: ChatAreaProps) {
+export function ChatArea({ messages, topic, onRetry }: ChatAreaProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -29,18 +30,27 @@ export function ChatArea({ messages, topic }: ChatAreaProps) {
   const isEmpty = messages.length === 0;
 
   return (
-    <div className="flex-1 overflow-y-auto py-4 scroll-smooth">
+    <div className="flex-1 overflow-y-auto py-4 scroll-smooth bg-[#FAF9F6]">
       {isEmpty ? (
-        <div className="flex flex-col items-center justify-center h-full gap-3 text-center px-8">
-          <div className="text-4xl">⚔️</div>
-          <h2 className="text-xl font-semibold text-gray-700">
-            Multi-Model Arena
-          </h2>
-          <p className="text-sm text-gray-500 max-w-sm">
-            {topic
-              ? `Topic: "${topic}"`
-              : "Start a conversation to pit AI models against each other. Type a topic or question below."}
-          </p>
+        <div className="flex flex-col items-center justify-center h-full gap-4 text-center px-8">
+          <div className="w-14 h-14 rounded-2xl bg-[#FAE8D4] flex items-center justify-center text-2xl shadow-sm">
+            ⚔️
+          </div>
+          <div className="flex flex-col gap-2">
+            <h2 className="text-xl font-semibold text-[#2C2420]">
+              Multi-Model Arena
+            </h2>
+            <p className="text-sm text-[#8B7E74] max-w-sm leading-relaxed">
+              {topic
+                ? `Topic: "${topic}"`
+                : "Pit AI models against each other. Type any question or topic below to start a debate."}
+            </p>
+          </div>
+          <div className="flex gap-3 mt-2">
+            <span className="text-xs text-[#B0A49A] bg-[#F2EDE8] rounded-full px-3 py-1.5">Compare answers</span>
+            <span className="text-xs text-[#B0A49A] bg-[#F2EDE8] rounded-full px-3 py-1.5">Debate any topic</span>
+            <span className="text-xs text-[#B0A49A] bg-[#F2EDE8] rounded-full px-3 py-1.5">Get a summary</span>
+          </div>
         </div>
       ) : (
         <div className="flex flex-col gap-1">
@@ -57,6 +67,7 @@ export function ChatArea({ messages, topic }: ChatAreaProps) {
                 cost={msg.cost}
                 error={msg.error}
                 streaming={msg.streaming}
+                onRetry={msg.error && msg.modelId && onRetry ? () => onRetry(msg.id, msg.modelId!) : undefined}
               />
             );
           })}

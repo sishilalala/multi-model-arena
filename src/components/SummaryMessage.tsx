@@ -20,19 +20,22 @@ export function SummaryMessage({ content }: SummaryMessageProps) {
   }
 
   return (
-    <div className="mx-4 my-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-semibold text-amber-700 uppercase tracking-wide">
-          Moderator Summary
-        </span>
+    <div className="mx-4 my-3 rounded-xl border border-[#E8C878] bg-[#FFFBEB] px-5 py-4 shadow-sm">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span className="text-amber-500 text-base">✦</span>
+          <span className="text-xs font-semibold text-amber-700 uppercase tracking-wider">
+            Moderator Summary
+          </span>
+        </div>
         <button
           onClick={handleCopy}
-          className="text-xs text-amber-700 hover:text-amber-900 font-medium transition-colors px-2 py-0.5 rounded hover:bg-amber-100"
+          className="text-xs text-amber-600 hover:text-amber-800 font-medium transition-colors px-2.5 py-1 rounded-lg hover:bg-amber-100"
         >
-          {copied ? "Copied!" : "Copy Summary"}
+          {copied ? "Copied!" : "Copy"}
         </button>
       </div>
-      <p className="text-sm text-amber-900 whitespace-pre-wrap">{content}</p>
+      <p className="text-sm text-[#5C3D00] whitespace-pre-wrap leading-relaxed">{content}</p>
     </div>
   );
 }

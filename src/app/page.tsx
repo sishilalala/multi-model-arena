@@ -515,14 +515,51 @@ export default function HomePage() {
     }
   }
 
+  // ─── handleRetry ──────────────────────────────────────────────────────────
+
+  async function handleRetry(messageId: string, modelId: string) {
+    if (phase !== "idle") return;
+    setPhase("responding");
+
+    const info = getModelInfo(modelId);
+
+    // Figure out which round this failed message was in
+    const failedMsg = messagesRef.current.find((m) => m.id === messageId);
+    const failedRound = round; // Use current round as best guess
+
+    // Gather previous responses from other models (same round, non-error)
+    const prevResponses: ModelResponse[] = messagesRef.current
+      .filter((m) => m.role === "model" && !m.error && m.id !== messageId)
+      .slice(-selectedModelIds.length)
+      .map((m) => {
+        const mInfo = getModelInfo(m.modelId ?? "");
+        return { modelName: mInfo.name, content: m.content };
+      });
+
+    // Remove the failed message
+    setMessages((prev) => prev.filter((m) => m.id !== messageId));
+
+    // Retry the model
+    const result = await streamModelResponse(
+      modelId,
+      info.name,
+      info.color,
+      userQuestion,
+      failedRound || 1,
+      failedRound > 1 ? prevResponses : []
+    );
+
+    setPhase("idle");
+  }
+
   // ─── Render ───────────────────────────────────────────────────────────────
 
   // Loading state
   if (hasApiKey === null) {
     return (
-      <div className="flex flex-1 items-center justify-center min-h-screen bg-gray-50">
+      <div className="flex flex-1 items-center justify-center min-h-screen bg-[#FAF9F6]">
         <svg
-          className="animate-spin w-8 h-8 text-blue-600"
+          className="animate-spin w-8 h-8 text-[#C96A2E]"
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
           viewBox="0 0 24 24"
@@ -561,7 +598,7 @@ export default function HomePage() {
   const showControlBar = round > 0 && phase === "idle";
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50">
+    <div className="flex h-screen overflow-hidden bg-[#FAF9F6]">
       {/* Sidebar */}
       <Sidebar
         conversations={conversations}
@@ -575,12 +612,12 @@ export default function HomePage() {
       {/* Main content */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         {/* Top bar */}
-        <div className="flex items-center justify-end px-4 py-2 border-b border-gray-200 bg-white shrink-0">
+        <div className="flex items-center justify-end px-4 py-2 border-b border-[#E8E0D8] bg-[#FAF9F6] shrink-0">
           <ConnectionStatus />
         </div>
 
         {/* Chat area */}
-        <ChatArea messages={messages} topic={userQuestion || undefined} />
+        <ChatArea messages={messages} topic={userQuestion || undefined} onRetry={handleRetry} />
 
         {/* Control bar */}
         {showControlBar && (
@@ -598,7 +635,7 @@ export default function HomePage() {
         )}
 
         {/* Chat input */}
-        <div className="px-4 py-3 border-t border-gray-200 bg-white shrink-0">
+        <div className="px-4 py-3 border-t border-[#E8E0D8] bg-[#FAF9F6] shrink-0">
           <ChatInput
             value={inputValue}
             onChange={setInputValue}

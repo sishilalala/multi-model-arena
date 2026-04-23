@@ -13,13 +13,13 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    "bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 disabled:bg-blue-300 disabled:cursor-not-allowed",
+    "bg-[#C96A2E] text-white hover:bg-[#B55D26] active:bg-[#A05020] disabled:bg-[#E8C4A8] disabled:text-[#C8A080] disabled:cursor-not-allowed",
   secondary:
-    "bg-gray-200 text-gray-800 hover:bg-gray-300 active:bg-gray-400 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed",
+    "bg-[#EDE8E3] text-[#5C4F46] hover:bg-[#E5DDD6] active:bg-[#DDD5CB] disabled:bg-[#F5F0EB] disabled:text-[#B0A49A] disabled:cursor-not-allowed",
   danger:
     "bg-red-600 text-white hover:bg-red-700 active:bg-red-800 disabled:bg-red-300 disabled:cursor-not-allowed",
   ghost:
-    "bg-transparent text-gray-700 hover:bg-gray-100 active:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed",
+    "bg-transparent text-[#5C4F46] hover:bg-[#EDE8E3] active:bg-[#E5DDD6] disabled:text-[#B0A49A] disabled:cursor-not-allowed",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -37,7 +37,7 @@ export function Button({
 }: ButtonProps) {
   return (
     <button
-      className={`inline-flex items-center justify-center gap-2 rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C96A2E] focus-visible:ring-offset-2 ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
       {...props}
     >
       {children}

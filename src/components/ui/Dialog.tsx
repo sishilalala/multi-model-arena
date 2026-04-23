@@ -62,17 +62,17 @@ export function Dialog({
       ref={dialogRef}
       onClick={handleClick}
       onCancel={onCancel}
-      className="rounded-lg shadow-xl p-0 backdrop:bg-black/50 w-full max-w-md"
+      className="rounded-xl shadow-xl p-0 backdrop:bg-[#1a1a1a]/50 w-full max-w-md bg-[#FAF9F6] border border-[#E8E0D8]"
     >
       <div className="p-6 flex flex-col gap-4">
-        <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
-        <p className="text-sm text-gray-600">{message}</p>
+        <h2 className="text-lg font-semibold text-[#1a1a1a]">{title}</h2>
+        <p className="text-sm text-[#5C4F46]">{message}</p>
 
         {requireInput != null && (
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-gray-500">
+            <label className="text-xs text-[#8B7E74]">
               Type{" "}
-              <span className="font-mono font-semibold text-gray-700">
+              <span className="font-mono font-semibold text-[#5C4F46]">
                 {requireInput}
               </span>{" "}
               to confirm
@@ -81,7 +81,7 @@ export function Dialog({
               type="text"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="border border-[#E8E0D8] rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#C96A2E] focus:border-transparent text-[#1a1a1a] placeholder-[#B0A49A]"
               autoFocus
             />
           </div>
