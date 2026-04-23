@@ -6,7 +6,7 @@ import type { AppConfig, CustomModel } from "@/lib/config";
 import { DEFAULT_MODELS, getAllModels, pickCustomColor } from "@/lib/models";
 import { Button } from "@/components/ui/Button";
 
-const MAX_MODELS = 6;
+const MAX_MODELS = 8;
 
 function Toggle({
   checked,

@@ -2,7 +2,7 @@
 
 import type { ModelInfo } from "@/lib/models";
 
-const MAX_MODELS = 6;
+const MAX_MODELS = 8;
 
 interface ModelSelectorProps {
   allModels: ModelInfo[];

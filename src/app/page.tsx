@@ -103,7 +103,7 @@ export default function HomePage() {
       if (res.ok) {
         const config = await res.json();
         if (Array.isArray(config.defaultModels) && config.defaultModels.length > 0) {
-          setSelectedModelIds(config.defaultModels.slice(0, 6));
+          setSelectedModelIds(config.defaultModels.slice(0, 8));
         }
         if (Array.isArray(config.customModels)) {
           setCustomModels(config.customModels);
