@@ -32,33 +32,69 @@ export function createOpenAICompatibleProvider(params: OpenAICompatibleParams): 
         usageResolve = resolve;
       });
 
+      // Use raw fetch instead of OpenAI SDK to properly handle
+      // reasoning_content (used by Seed 2.0, DeepSeek R1)
       const stream = new ReadableStream<Uint8Array>({
         async start(controller) {
           const encoder = new TextEncoder();
+          const decoder = new TextDecoder();
           try {
-            const response = await client.chat.completions.create({
-              model,
-              messages: messages as OpenAI.Chat.ChatCompletionMessageParam[],
-              temperature,
-              stream: true,
-              stream_options: { include_usage: true },
+            const response = await fetch(`${baseUrl}/chat/completions`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${apiKey}`,
+              },
+              body: JSON.stringify({
+                model,
+                messages,
+                temperature,
+                stream: true,
+              }),
             });
 
-            for await (const chunk of response) {
-              const choice = chunk.choices[0]?.delta as Record<string, unknown> | undefined;
-              // Some models (Seed 2.0, DeepSeek R1) send thinking in reasoning_content
-              // and the actual answer in content. We show the actual content only.
-              const delta = (choice?.content as string) || "";
-              // If content is empty but reasoning_content exists, the model is still thinking - skip
-              if (delta) {
-                controller.enqueue(
-                  encoder.encode(`data: ${JSON.stringify({ content: delta })}\n\n`)
-                );
-              }
-              if (chunk.usage) {
-                usageData.promptTokens = chunk.usage.prompt_tokens ?? 0;
-                usageData.completionTokens = chunk.usage.completion_tokens ?? 0;
-                usageData.totalTokens = chunk.usage.total_tokens ?? 0;
+            if (!response.ok) {
+              const errText = await response.text();
+              throw new Error(`API error ${response.status}: ${errText.slice(0, 200)}`);
+            }
+
+            const reader = response.body!.getReader();
+            let buffer = "";
+
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+
+              buffer += decoder.decode(value, { stream: true });
+              const lines = buffer.split("\n");
+              buffer = lines.pop() ?? "";
+
+              for (const line of lines) {
+                if (!line.startsWith("data: ")) continue;
+                const data = line.slice(6).trim();
+                if (data === "[DONE]") continue;
+
+                try {
+                  const parsed = JSON.parse(data);
+                  const delta = parsed.choices?.[0]?.delta;
+
+                  // Get actual content (not reasoning_content which is internal thinking)
+                  const content = delta?.content || "";
+                  if (content) {
+                    controller.enqueue(
+                      encoder.encode(`data: ${JSON.stringify({ content })}\n\n`)
+                    );
+                  }
+
+                  // Track usage
+                  if (parsed.usage) {
+                    usageData.promptTokens = parsed.usage.prompt_tokens ?? 0;
+                    usageData.completionTokens = parsed.usage.completion_tokens ?? 0;
+                    usageData.totalTokens = parsed.usage.total_tokens ?? 0;
+                  }
+                } catch {
+                  // skip malformed chunks
+                }
               }
             }
 
