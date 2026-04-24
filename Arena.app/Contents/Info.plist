@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleExecutable</key>
+  <string>arena-launcher.sh</string>
+  <key>CFBundleName</key>
+  <string>Arena</string>
+  <key>CFBundleDisplayName</key>
+  <string>Multi-Model Arena</string>
+  <key>CFBundleIdentifier</key>
+  <string>com.multi-model-arena.app</string>
+  <key>CFBundleVersion</key>
+  <string>2.0.0</string>
+  <key>CFBundlePackageType</key>
+  <string>APPL</string>
+</dict>
+</plist>
