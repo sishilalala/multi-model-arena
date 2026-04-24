@@ -5,3 +5,4 @@ dist/
 *.tsbuildinfo
 conversations/
 .DS_Store
+.next/
