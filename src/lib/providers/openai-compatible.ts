@@ -45,7 +45,11 @@ export function createOpenAICompatibleProvider(params: OpenAICompatibleParams): 
             });
 
             for await (const chunk of response) {
-              const delta = chunk.choices[0]?.delta?.content;
+              const choice = chunk.choices[0]?.delta as Record<string, unknown> | undefined;
+              // Some models (Seed 2.0, DeepSeek R1) send thinking in reasoning_content
+              // and the actual answer in content. We show the actual content only.
+              const delta = (choice?.content as string) || "";
+              // If content is empty but reasoning_content exists, the model is still thinking - skip
               if (delta) {
                 controller.enqueue(
                   encoder.encode(`data: ${JSON.stringify({ content: delta })}\n\n`)
