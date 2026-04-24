@@ -1,5 +1,5 @@
-import { createOpenAICompatibleProvider } from "./openai-compatible";
-import type { Provider } from "./types";
+import { createOpenAICompatibleProvider } from "./openai-compatible.js";
+import type { Provider } from "./types.js";
 
 const GOOGLE_OPENAI_COMPAT_BASE_URL =
   "https://generativelanguage.googleapis.com/v1beta/openai";

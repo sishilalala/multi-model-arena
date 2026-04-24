@@ -1,10 +1,10 @@
-import { getApiKey } from "@/lib/keychain.js";
-import type { ProviderConfig, CustomModel } from "@/lib/config.js";
-import { createAnthropicProvider } from "./anthropic-direct";
-import { createGoogleProvider } from "./google-direct";
-import { createOpenAICompatibleProvider } from "./openai-compatible";
-import { createOpenRouterProvider } from "./openrouter";
-import type { Provider } from "./types";
+import { getApiKey } from "../keychain.js";
+import type { ProviderConfig, CustomModel } from "../config.js";
+import { createAnthropicProvider } from "./anthropic-direct.js";
+import { createGoogleProvider } from "./google-direct.js";
+import { createOpenAICompatibleProvider } from "./openai-compatible.js";
+import { createOpenRouterProvider } from "./openrouter.js";
+import type { Provider } from "./types.js";
 
 const OPENAI_BASE_URL = "https://api.openai.com/v1";
 const DEEPSEEK_BASE_URL = "https://api.deepseek.com/v1";
@@ -96,4 +96,4 @@ export async function getProviderForModel(
 }
 
 export type { Provider };
-export type { ChatMessage, ChatResponse, UsageData } from "./types";
+export type { ChatMessage, ChatResponse, UsageData } from "./types.js";

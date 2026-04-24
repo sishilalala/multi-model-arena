@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import type { ChatMessage, ChatResponse, Provider, UsageData } from "./types";
+import type { ChatMessage, ChatResponse, Provider, UsageData } from "./types.js";
 
 interface OpenAICompatibleParams {
   id: string;
