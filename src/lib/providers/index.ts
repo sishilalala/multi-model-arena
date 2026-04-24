@@ -1,5 +1,5 @@
-import { getApiKey } from "@/app/api/keys/route";
-import type { ProviderConfig, CustomModel } from "@/lib/config";
+import { getApiKey } from "@/lib/keychain.js";
+import type { ProviderConfig, CustomModel } from "@/lib/config.js";
 import { createAnthropicProvider } from "./anthropic-direct";
 import { createGoogleProvider } from "./google-direct";
 import { createOpenAICompatibleProvider } from "./openai-compatible";

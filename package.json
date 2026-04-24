@@ -1,30 +1,31 @@
 {
   "name": "multi-model-arena",
-  "version": "0.1.0",
+  "version": "2.0.0",
   "private": true,
+  "type": "module",
+  "bin": {
+    "arena": "./bin/arena.js"
+  },
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "start": "tsx src/terminal/index.tsx",
+    "dev": "tsx watch src/terminal/index.tsx"
   },
   "dependencies": {
+    "clipboardy": "^4.0.0",
+    "ink": "^5.2.1",
+    "ink-select-input": "^6.2.0",
+    "ink-spinner": "^5.0.0",
+    "ink-text-input": "^6.0.0",
     "keytar": "^7.9.0",
-    "next": "16.2.4",
     "openai": "^6.34.0",
-    "react": "19.2.4",
-    "react-dom": "19.2.4",
-    "react-markdown": "^10.1.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "slugify": "^1.6.9"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
     "@types/node": "^20.19.39",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.2.4",
-    "tailwindcss": "^4",
+    "@types/react": "^18.3.28",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }
