@@ -213,6 +213,9 @@ export function ChatScreen({ onOpenSettings, onQuit }: ChatScreenProps): React.R
           setPendingQuestion(trimmed);
           setShowModelPicker(true);
         }
+      } else if (chat.hasSummary) {
+        // Continue after summary - start new debate round with follow-up
+        chat.continueAfterSummary(trimmed);
       } else {
         // Follow-up in existing conversation
         chat.addUserFollowUp(trimmed);
@@ -256,6 +259,8 @@ export function ChatScreen({ onOpenSettings, onQuit }: ChatScreenProps): React.R
   let inputPlaceholder = "Ask a question...";
   if (isResponding) {
     inputPlaceholder = "Responding...";
+  } else if (chat.hasSummary) {
+    inputPlaceholder = "Ask a follow-up to continue the debate...";
   } else if (hasConversation) {
     inputPlaceholder = "Follow-up or use shortcuts (d/s/m/n/r/c)...";
   } else if (selectedModelsForNext.length > 0) {

@@ -627,6 +627,142 @@ export function useChat(): UseChatReturn {
     }
   }, []);
 
+  const continueAfterSummary = useCallback(async (followUp: string) => {
+    const current = stateRef.current;
+    if (current.phase !== "idle") return;
+
+    const config = readConfig();
+    const { selectedModelIds, language, conversationId, userQuestion } = current;
+    const nextRound = current.round + 1;
+
+    // Add user follow-up message
+    setMessages((msgs) => [
+      ...msgs,
+      { id: nextId(), role: "user" as const, content: followUp, round: nextRound },
+    ]);
+
+    // Build context: include the summary + user's follow-up
+    const summaryMsg = current.messages.filter((m) => m.role === "summary").pop();
+    const previousResponses = [
+      ...(summaryMsg
+        ? [{ modelName: "Previous Summary", content: summaryMsg.content }]
+        : []),
+      { modelName: "User", content: followUp },
+    ];
+
+    // Add placeholder messages for all models
+    const newPlaceholders: Array<{ id: string; modelId: string; modelName: string }> = [];
+    const newMessages: Message[] = [];
+
+    for (const modelId of selectedModelIds) {
+      const info = getModelInfo(modelId, config.customModels);
+      const msgId = nextId();
+      newPlaceholders.push({ id: msgId, modelId, modelName: info.name });
+      newMessages.push({
+        id: msgId,
+        role: "assistant",
+        modelId,
+        modelName: info.name,
+        content: "",
+        streaming: true,
+        round: nextRound,
+      });
+    }
+
+    const streamingProgress: Record<string, boolean> = {};
+    for (const { modelId } of newPlaceholders) {
+      streamingProgress[modelId] = true;
+    }
+
+    if (conversationId) {
+      appendToConversation(conversationId, `## Follow-up (Round ${nextRound})\n\n### User\n${followUp}\n\n`);
+    }
+
+    setState((prev) => ({
+      ...prev,
+      messages: [...prev.messages, ...newMessages],
+      round: nextRound,
+      phase: "debating",
+      hasSummary: false,
+      userQuestion: userQuestion + "\n\n[Follow-up after summary]: " + followUp,
+      streamingProgress,
+    }));
+
+    await Promise.allSettled(
+      newPlaceholders.map(async ({ id: msgId, modelId, modelName }) => {
+        try {
+          const provider = await getProviderForModel(modelId, config.providers, config.customModels);
+          if (!provider) {
+            updateMessage(msgId, { error: "No provider available", streaming: false });
+            setState((prev) => ({
+              ...prev,
+              streamingProgress: { ...prev.streamingProgress, [modelId]: false },
+            }));
+            return;
+          }
+
+          const systemPrompt = buildDebatePrompt({
+            language,
+            debateStyle: config.debateStyle,
+            modelName,
+            round: nextRound,
+            previousResponses,
+          });
+
+          const chatMessages: ProviderChatMessage[] = [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userQuestion + "\n\n" + followUp },
+          ];
+
+          const response = await provider.chat({
+            model: modelId,
+            messages: chatMessages,
+            temperature: config.temperature,
+          });
+
+          let fullContent = "";
+          await streamResponse(
+            response.stream,
+            (chunk) => {
+              fullContent += chunk;
+              updateMessage(msgId, { content: fullContent });
+            },
+            (errMsg) => {
+              updateMessage(msgId, { error: errMsg, streaming: false });
+              setState((prev) => ({
+                ...prev,
+                streamingProgress: { ...prev.streamingProgress, [modelId]: false },
+              }));
+            }
+          );
+
+          updateMessage(msgId, { content: fullContent, streaming: false });
+          setState((prev) => ({
+            ...prev,
+            streamingProgress: { ...prev.streamingProgress, [modelId]: false },
+          }));
+
+          if (conversationId) {
+            appendToConversation(conversationId, `### ${modelName}\n\n${fullContent}\n\n`);
+          }
+        } catch (err) {
+          const errMsg = err instanceof Error ? err.message : "Unknown error";
+          updateMessage(msgId, { error: errMsg, streaming: false });
+          setState((prev) => ({
+            ...prev,
+            streamingProgress: { ...prev.streamingProgress, [modelId]: false },
+          }));
+        }
+      })
+    );
+
+    if (conversationId) {
+      updateRoundCount(conversationId, nextRound);
+    }
+
+    setState((prev) => ({ ...prev, phase: "idle" }));
+  }, []);
+
   const resetChat = useCallback(() => {
     setState({
       messages: [],
@@ -669,6 +805,7 @@ export function useChat(): UseChatReturn {
     keepDebating,
     summarize,
     addUserFollowUp,
+    continueAfterSummary,
     retryModel,
     resetChat,
     loadConversation,
