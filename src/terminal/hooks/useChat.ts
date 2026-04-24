@@ -809,5 +809,6 @@ export function useChat(): UseChatReturn {
     retryModel,
     resetChat,
     loadConversation,
+    setSelectedModelIds: (ids: string[]) => setState((prev) => ({ ...prev, selectedModelIds: ids })),
   };
 }

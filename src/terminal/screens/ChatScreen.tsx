@@ -172,6 +172,9 @@ export function ChatScreen({ onOpenSettings, onQuit }: ChatScreenProps): React.R
       if (pendingQuestion) {
         chat.sendQuestion(pendingQuestion, modelIds);
         setPendingQuestion(null);
+      } else {
+        // Mid-conversation model change - update for next round
+        chat.setSelectedModelIds(modelIds);
       }
     },
     [chat, pendingQuestion]
