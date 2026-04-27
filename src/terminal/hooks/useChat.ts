@@ -65,7 +65,7 @@ function nextId(): string {
   return `msg-${++msgCounter}-${Date.now()}`;
 }
 
-const STREAM_TIMEOUT_MS = 120_000; // 120s to allow for models with reasoning phases
+const STREAM_TIMEOUT_MS = 180_000; // 180s to allow for slow models with reasoning phases
 
 async function streamResponse(
   stream: ReadableStream<Uint8Array>,
@@ -77,7 +77,7 @@ async function streamResponse(
   let buffer = "";
 
   const timeout = new Promise<never>((_, reject) =>
-    setTimeout(() => reject(new Error("Timed out after 120s")), STREAM_TIMEOUT_MS)
+    setTimeout(() => reject(new Error("Timed out after 180s")), STREAM_TIMEOUT_MS)
   );
 
   async function readAll(): Promise<void> {

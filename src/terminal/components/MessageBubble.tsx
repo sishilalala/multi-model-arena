@@ -62,6 +62,10 @@ export function MessageBubble({
           <Text dimColor>did not respond </Text>
           <Text dimColor>[R]etry</Text>
         </Box>
+      ) : streaming && !content ? (
+        <Box marginLeft={2}>
+          <Text dimColor italic>Thinking...</Text>
+        </Box>
       ) : (
         <Box marginLeft={2}>
           <Text wrap="wrap">{content}</Text>
